@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FlipKit">
+<title>FlipKit</title>
+<style>
+:root{
+  --bg:#0f0e0d;--card:#1c1b19;--card2:#242220;--card3:#2c2a27;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --amber:#e8a547;--amberBg:rgba(232,165,71,0.12);
+  --text:#f0ece4;--text2:#a09890;--text3:#635e5a;
+  --green:#5ec47a;--greenBg:rgba(94,196,122,0.12);
+  --blue:#5a9ef0;--blueBg:rgba(90,158,240,0.12);
+  --red:#e05550;--purple:#c09ae0;--purpleBg:rgba(192,154,224,0.12);
+  --r:16px;--r-sm:10px;--r-xs:7px;
+  --st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif;font-size:16px;line-height:1}
+#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto}
+.hdr{flex-shrink:0;padding:calc(var(--st) + 14px) 16px 10px;background:rgba(15,14,13,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:0.5px solid var(--border);z-index:5}
+.scrl{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px calc(var(--sb) + 82px)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;border-top:0.5px solid var(--border);padding-bottom:var(--sb);background:rgba(15,14,13,.94);backdrop-filter:blur(24px);z-index:10}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 0;background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;font-family:inherit;letter-spacing:.03em;transition:color .15s}
+.nb.on{color:var(--amber)}.nb.on svg{filter:drop-shadow(0 0 4px rgba(232,165,71,.4))}
+.card{background:var(--card);border-radius:var(--r);border:0.5px solid var(--border);overflow:hidden;margin-bottom:8px}
+@keyframes cardOut{0%{opacity:1;transform:scale(1);max-height:500px;margin-bottom:8px}50%{opacity:0;transform:scale(.95) translateY(-8px)}100%{opacity:0;max-height:0;margin-bottom:0;border-width:0}}
+.card.exit,.bike-group.exit{animation:cardOut .44s cubic-bezier(.4,0,.2,1) forwards;pointer-events:none}
+.hero{position:relative;width:100%;aspect-ratio:16/9;background:var(--card2);overflow:hidden}
+.hero.tall{aspect-ratio:4/3}
+.hero img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.78) 0%,rgba(0,0,0,.1) 55%,transparent 100%)}
+.hero-info{position:absolute;bottom:11px;left:13px;right:13px}
+.hero-info h3{font-size:16px;font-weight:600;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.hero-info p{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px}
+.hero-cam{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);border:0.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+.hero-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text3)}
+.hero-ph svg{opacity:.4}.hero-ph span{font-size:12px;opacity:.6}
+.trow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border);cursor:pointer;user-select:none;-webkit-user-select:none;transition:opacity .1s}
+.trow:last-child{border-bottom:none}.trow:active{opacity:.65}
+.chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .25s cubic-bezier(.34,1.56,.64,1);position:relative}
+.chk.ok{background:var(--green);border-color:var(--green)}
+@keyframes rpl{0%{transform:scale(0);opacity:.5}100%{transform:scale(2.5);opacity:0}}
+.chk.ok::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.4);border-radius:50%;animation:rpl .35s ease-out forwards}
+.ttext{flex:1;font-size:13px;line-height:1.3;color:var(--text)}
+.ttext.done{text-decoration:line-through;color:var(--text3)}
+.tlink{font-size:11px;color:var(--blue);text-decoration:none;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.tag{font-size:10px;font-weight:500;padding:2px 6px;border-radius:5px;flex-shrink:0;white-space:nowrap}
+.tg-fix,.tg-buy,.tg-fix,.tg-order{background:var(--blueBg);color:var(--blue)}
+.tg-clean,.tg-photo,.tg-list,.tg-listing,.tg-other{background:var(--amberBg);color:var(--amber)}
+.inp{width:100%;padding:11px 13px;background:var(--card2);border:0.5px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:15px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border-color .15s}
+.inp:focus{border-color:var(--amber)}.inp::placeholder{color:var(--text3)}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:13px;border-radius:var(--r-sm);font-size:15px;font-family:inherit;font-weight:600;cursor:pointer;border:none;width:100%;transition:opacity .15s,transform .1s}
+.btn:active{opacity:.8;transform:scale(.98)}.btn-p{background:var(--amber);color:#160f00}.btn-g{background:var(--card2);color:var(--text);border:0.5px solid var(--border2)}
+.btn-sm{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:var(--r-xs);font-size:12px;font-family:inherit;font-weight:500;cursor:pointer;border:0.5px solid var(--border2);background:var(--card2);color:var(--text2);white-space:nowrap}
+.btn-sm:active{opacity:.7}
+.row{display:flex;align-items:center;gap:8px}.row-sb{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:500;flex-shrink:0}
+.bw{background:var(--amberBg);color:var(--amber)}.bg{background:var(--greenBg);color:var(--green)}
+.lbl{font-size:13px;color:var(--text2);margin-bottom:5px;display:block}
+.form-group{margin-bottom:12px}
+.sec{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:12px 0 6px}
+.empty{text-align:center;padding:48px 24px;color:var(--text3);font-size:14px;line-height:1.9}
+.back-btn{background:none;border:none;color:var(--amber);cursor:pointer;display:flex;align-items:center;padding:0;margin-right:4px;flex-shrink:0}
+.pbar{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:5px}
+.pbar-f{height:100%;border-radius:2px;transition:width .4s ease}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+.av0{background:#9FE1CB;color:#085041}.av1{background:#CECBF6;color:#3C3489}
+.av2{background:#F5C4B3;color:#712B13}.av3{background:#FAC775;color:#633806}
+.av4{background:#B5D4F4;color:#185FA5}.av5{background:#C0DD97;color:#3B6D11}
+.uchip{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;font-size:10px;cursor:pointer;flex-shrink:0;border:1.5px solid transparent;transition:all .15s;user-select:none;-webkit-user-select:none}
+.uchip:active{transform:scale(.9)}
+.uchip.u0{background:rgba(159,225,203,.15);color:#9FE1CB;border-color:rgba(159,225,203,.3)}
+.uchip.u1{background:rgba(250,199,117,.15);color:#FAC775;border-color:rgba(250,199,117,.3)}
+.uchip.un{background:var(--card2);color:var(--text3);border-color:var(--border2)}
+.ptoggle{display:flex;background:var(--card2);border-radius:20px;padding:2px;gap:2px;border:0.5px solid var(--border)}
+.ptbtn{flex:1;padding:5px 10px;border:none;border-radius:18px;background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.ptbtn.on{background:var(--card3);color:var(--text)}
+.bike-group{background:var(--card);border-radius:var(--r);border:0.5px solid var(--border);margin-bottom:8px;overflow:hidden}
+.bike-group-hdr{display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:0.5px solid var(--border);cursor:pointer}
+.bike-group-hdr:active{background:var(--card2)}
+.bike-group-tasks{padding:0 11px}
+.standalone-row{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--card);border-radius:var(--r-sm);border:0.5px solid var(--border);margin-bottom:6px;cursor:pointer}
+.standalone-row:active{opacity:.75}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gc{background:var(--card);border-radius:var(--r);border:0.5px solid var(--border);overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
+.gc:active{opacity:.8}
+.gc-photo{position:relative;width:100%;aspect-ratio:4/3;background:var(--card2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.gc-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.gc-ph{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text3)}
+.gc-ph span{font-size:10px}
+.gc-cam{position:absolute;bottom:7px;right:7px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);border:0.5px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;z-index:2}
+.gc-body{padding:8px 9px 10px;flex:1;display:flex;flex-direction:column;gap:3px}
+.gc-body.st-fix{background:rgba(90,158,240,.07)}
+.gc-body.st-ready{background:rgba(232,165,71,.07)}
+.gc-body.st-listed{background:rgba(94,196,122,.07)}
+.gc-body.st-sold{background:rgba(100,100,100,.05)}
+.gc-name{font-size:13px;font-weight:600;line-height:1.25;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-sub{font-size:11px;color:var(--text3);line-height:1.3}
+.gc-bar{height:4px;width:100%;flex-shrink:0;overflow:hidden}
+.s-fix{background:var(--blue)}.s-ready{background:var(--amber)}.s-listed{background:var(--green)}.s-sold{background:var(--text3)}
+.bike-group.fix-stage{border-left:3px solid var(--blue);background:rgba(90,158,240,.04)}
+.bike-group.ready-stage{border-left:3px solid var(--amber);background:rgba(232,165,71,.04)}
+.bike-group.listed-stage{border-left:3px solid var(--green);background:rgba(94,196,122,.04)}
+@keyframes soldGlow{0%,100%{box-shadow:0 0 8px rgba(94,196,122,.3)}50%{box-shadow:0 0 22px rgba(94,196,122,.7),0 0 44px rgba(94,196,122,.25)}}
+
+.add-task-link{display:flex;align-items:center;gap:6px;padding:8px 0 8px;font-size:12px;color:var(--text3);cursor:pointer;border-top:0.5px solid var(--border)}
+.add-task-link:active{color:var(--amber)}
+.spills{display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:8px;padding-bottom:1px}
+.spills::-webkit-scrollbar{display:none}
+.spill{padding:5px 11px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:0.5px solid var(--border2);background:none;color:var(--text3);font-weight:500;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.spill.sa.on{background:var(--card2);color:var(--text);border-color:var(--border)}
+.spill.sf{color:var(--blue)}.spill.sf.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.spill.sr{color:var(--amber)}.spill.sr.on{background:var(--amber);color:#160f00;border-color:var(--amber)}
+.spill.sl{color:var(--green)}.spill.sl.on{background:var(--green);color:#051510;border-color:var(--green)}
+.spill.ss.on{background:var(--card2);color:var(--text);border-color:var(--border)}
+.cost-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.cost-row:last-child{border-bottom:none}
+.stale-banner{background:var(--amberBg);border:0.5px solid rgba(232,165,71,.3);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.pthumb{aspect-ratio:1;object-fit:cover;width:100%;border-radius:5px;cursor:pointer;display:block;background:var(--card2)}
+.padd-btn{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:5px;border:1.5px dashed var(--text3);cursor:pointer;background:none;color:var(--text3);font-size:24px;line-height:1}
+.padd-btn:active{border-color:var(--amber);color:var(--amber)}
+.sold-total{background:var(--card);border-radius:var(--r);border:0.5px solid var(--border);padding:12px 14px;margin-top:4px;display:flex;justify-content:space-between;align-items:center}
+.toggle{width:40px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--amber)}.toggle.off{background:var(--card3)}
+.toggle::after{content:'';position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.toggle.on::after{left:19px}.toggle.off::after{left:3px}
+.dtask-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.dtask-row:last-child{border-bottom:none}
+.copt{padding:6px 13px;border-radius:8px;border:0.5px solid var(--border2);background:var(--card2);color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.copt.sel{background:var(--amber);color:#160f00;border-color:var(--amber);font-weight:500}
+.fab{position:fixed;bottom:calc(var(--sb) + 68px);right:max(16px,calc(50vw - 199px));width:52px;height:52px;border-radius:50%;background:var(--amber);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9;color:#160f00;box-shadow:0 4px 18px rgba(232,165,71,.4);transition:transform .1s}
+.fab:active{transform:scale(.92)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:16px 16px calc(var(--sb) + 24px);max-height:90vh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:17px;font-weight:700;margin-bottom:14px}
+.confirm-sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.confirm-box{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:20px 16px calc(var(--sb) + 20px)}
+#viewer{position:fixed;inset:0;background:#000;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center}
+.viewer-bar{position:absolute;top:0;left:0;right:0;padding:calc(var(--st) + 12px) 16px 14px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent)}
+#viewer img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px}
+.viewer-actions{position:absolute;bottom:calc(var(--sb) + 20px);display:flex;gap:10px}
+#toast{position:fixed;bottom:calc(var(--sb) + 82px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--card);color:var(--text);padding:10px 20px;border-radius:24px;font-size:14px;border:0.5px solid var(--border2);opacity:0;transition:opacity .25s,transform .25s;z-index:50;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:200;display:none}
+.sch-btn{font-size:11px;padding:2px 7px;border-radius:7px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:inherit}
+
+/* Today card stage: full border */
+.bike-group.fix-stage{border:1.5px solid rgba(90,158,240,.45);background:rgba(90,158,240,.03)}
+.bike-group.ready-stage{border:1.5px solid rgba(232,165,71,.45);background:rgba(232,165,71,.03)}
+.bike-group.listed-stage{border:1.5px solid rgba(94,196,122,.45);background:rgba(94,196,122,.03)}
+
+/* Heartbeat when all tasks done */
+@keyframes heartbeatGlow{0%,100%{box-shadow:0 0 0 0 rgba(94,196,122,0);border-color:rgba(94,196,122,.3)}50%{box-shadow:0 0 0 4px rgba(94,196,122,.18),inset 0 0 12px rgba(94,196,122,.06);border-color:rgba(94,196,122,.8)}}
+.bike-group.all-done-beat{animation:heartbeatGlow 1.1s ease-in-out infinite;border:1.5px solid rgba(94,196,122,.5)!important;background:rgba(94,196,122,.05)!important}
+.done-today-reveal{overflow:hidden;max-height:0;transition:max-height .35s cubic-bezier(.4,0,.2,1)}
+.done-today-reveal.show{max-height:60px}
+.done-today-btn{width:100%;padding:11px;background:rgba(94,196,122,.1);border:none;border-top:0.5px solid rgba(94,196,122,.2);color:var(--green);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;letter-spacing:.01em}
+.done-today-btn:active{background:rgba(94,196,122,.2)}
+
+/* Task text area */
+.task-ta{width:100%;padding:11px 13px;background:var(--card2);border:0.5px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:15px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border-color .15s;resize:none;min-height:68px;line-height:1.45}
+.task-ta:focus{border-color:var(--amber)}.task-ta::placeholder{color:var(--text3)}
+
+/* Bike thumbnails in modal select */
+.bike-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
+.bpick-item{border-radius:var(--r-sm);border:1.5px solid var(--border2);overflow:hidden;cursor:pointer;position:relative;aspect-ratio:4/3;background:var(--card2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:4px}
+.bpick-item.sel{border-color:var(--amber)}
+.bpick-item img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.bpick-item span{font-size:9px;font-weight:600;color:var(--text2);position:relative;z-index:1;text-align:center;padding:0 2px;text-shadow:0 1px 3px rgba(0,0,0,.6);line-height:1.2}
+.bpick-none{border-radius:var(--r-sm);border:0.5px solid var(--border2);padding:9px 10px;cursor:pointer;font-size:12px;color:var(--text3);background:var(--card2);display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.bpick-none.sel{border-color:var(--amber);color:var(--amber)}
+
+/* Photo square on add bike */
+.nb-photo-box{aspect-ratio:4/3;background:var(--card2);border-radius:var(--r-sm);border:1.5px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--text3);margin-top:4px;overflow:hidden;position:relative}
+.nb-photo-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nb-photo-box:active{border-color:var(--amber)}
+
+/* Sold glow */
+
+.sold-glow-btn{animation:soldGlow 2s ease-in-out infinite;border-color:rgba(94,196,122,.5)!important;color:var(--green)!important}
+
+/* Profile redesign helpers */
+.stat-pill{background:var(--card2);border-radius:var(--r-sm);padding:9px 11px;display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.stat-pill.editable{border:0.5px solid var(--border2);transition:border-color .15s}
+.stat-pill.editable:focus-within{border-color:var(--amber)}
+.stat-pill-lbl{font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
+.stat-pill-val{font-size:15px;font-weight:700;color:var(--text)}
+.task-section{background:var(--card);border-radius:var(--r);border:0.5px solid var(--border);margin-bottom:8px;overflow:hidden}
+.task-section-hdr{padding:9px 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border)}
+.task-section-hdr-title{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+.inline-price-reveal{overflow:hidden;max-height:0;transition:max-height .3s ease}
+.inline-price-reveal.open{max-height:120px}
+</style>
+</head>
+<body>
+<div id="app"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:14px">Loading&#8230;</div></div>
+<div id="toast"></div>
+<canvas id="fx"></canvas>
+<div id="viewer">
+  <div class="viewer-bar">
+    <button onclick="closeViewer()" style="background:none;border:none;color:#fff;font-size:15px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:5px">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Close
+    </button>
+    <div id="viewer-count" style="font-size:13px;color:rgba(255,255,255,.6)"></div>
+  </div>
+  <img id="viewer-img" src="" alt="">
+  <div class="viewer-actions">
+    <button class="btn-sm" onclick="shareCurrentPhoto()" style="background:rgba(30,30,28,.8);backdrop-filter:blur(10px)">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 4L6.5 1l3 3M1 10v1.5A1.5 1.5 0 002.5 13h8A1.5 1.5 0 0012 11.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Share / Save
+    </button>
+    <button class="btn-sm" onclick="deleteViewerPhoto()" style="background:rgba(30,30,28,.8);backdrop-filter:blur(10px);color:var(--red);border-color:rgba(224,85,80,.3)">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4h10M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4M5.5 6.5v4M8.5 6.5v4M3 4l.7 7.3A1 1 0 004.7 12h4.6a1 1 0 001-.7L11 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Delete
+    </button>
+  </div>
+</div>
+<input type="file" id="file-in" accept="image/*" style="display:none">
+<script>
+/* ===================== SUPABASE ===================== */
+const SB_URL='https://alhxqzamfgfeiewfyegm.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsaHhxemFtZmdmZWlld2Z5ZWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MDg3ODEsImV4cCI6MjA5MTQ4NDc4MX0.iOU7eNjSGpxIRLRLEODJfmbu1D9kkfZI-Aeb9Oc4T4E';
+const SB_HDR={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+
+async function sbGet(table,params){
+  var url=SB_URL+'/rest/v1/'+table+'?'+params;
+  var r=await fetch(url,{headers:SB_HDR});
+  if(!r.ok)throw new Error('GET '+table+' failed: '+r.status);
+  return r.json();
+}
+async function sbInsert(table,obj){
+  var r=await fetch(SB_URL+'/rest/v1/'+table,{method:'POST',headers:SB_HDR,body:JSON.stringify(obj)});
+  if(!r.ok){var t=await r.text();throw new Error('INSERT '+table+' failed: '+t);}
+  var d=await r.json();return Array.isArray(d)?d[0]:d;
+}
+async function sbUpdate(table,id,obj){
+  var r=await fetch(SB_URL+'/rest/v1/'+table+'?id=eq.'+id,{method:'PATCH',headers:SB_HDR,body:JSON.stringify(obj)});
+  if(!r.ok){var t=await r.text();throw new Error('UPDATE '+table+' failed: '+t);}
+  var d=await r.json();return Array.isArray(d)?d[0]:d;
+}
+async function sbDelete(table,id){
+  var r=await fetch(SB_URL+'/rest/v1/'+table+'?id=eq.'+id,{method:'DELETE',headers:{...SB_HDR,Prefer:''}});
+  if(!r.ok)throw new Error('DELETE '+table+' failed: '+r.status);
+}
+async function sbUploadPhoto(path,blob){
+  var contentType=blob.type||'image/jpeg';
+  var r=await fetch(SB_URL+'/storage/v1/object/flipkit-photos/'+path,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':contentType,'x-upsert':'true'},
+    body:blob
+  });
+  if(!r.ok){var t=await r.text();console.error('Upload error:',t);throw new Error('Upload failed: '+t);}
+  return SB_URL+'/storage/v1/object/public/flipkit-photos/'+path;
+}
+async function sbDeletePhoto(path){
+  await fetch(SB_URL+'/storage/v1/object/flipkit-photos/'+path,{
+    method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  });
+}
+
+/* STATE */
+var _cfg=JSON.parse(localStorage.getItem('fk-config')||'{}');
+var S={
+  screen:'today',bikeId:null,
+  bikes:[],photos:{},photoUrls:{},standaloneTasks:[],costs:{},
+  viewerPhoto:null,viewerBikeId:null,photoMode:null,photoTargetBike:null,
+  nextTid:1,todayFilter:(_cfg.myUser!=null?_cfg.myUser:'all'),bikesFilter:'all',
+  users:_cfg.users||[{id:0,name:'Daichi'},{id:1,name:'Mohamed'}],
+  myUser:_cfg.myUser!=null?_cfg.myUser:0,
+  defaultTasks:_cfg.defaultTasks||[
+    {text:'Clean bike',cat:'clean',on:true},
+    {text:'Take listing photos',cat:'photo',on:true},
+    {text:'List bike',cat:'list',on:true},
+  ],
+  modalData:{},_nbName:'',_nbPrice:'',_nbSize:'',_nbPhotoBlob:null,_nbPhotoName:'',
+  prevScreen:'today',prevBikeId:null,
+};
+function goBack(){go(S.prevScreen==='today'?'today':'bikes',S.prevScreen==='detail'?S.prevBikeId:undefined);}
+function saveConfig(){localStorage.setItem('fk-config',JSON.stringify({users:S.users,myUser:S.myUser,defaultTasks:S.defaultTasks}));}
+// Migrate stale user names from old defaults
+(function(){
+  var stale=['You','Partner','Y','P'];
+  var fresh=['Daichi','Mohamed'];
+  var changed=false;
+  S.users.forEach(function(u,i){
+    if(stale.indexOf(u.name)>=0){u.name=fresh[i]||u.name;changed=true;}
+  });
+  if(changed)saveConfig();
+})();
+// Migrate stale default task cats
+(function(){
+  var fix={clean:['Clean bike'],photo:['Take listing photos'],list:['Post on Marktplaats','Post on Facebook Marketplace','List bike']};
+  var changed=false;
+  S.defaultTasks.forEach(function(d){
+    for(var cat in fix){if(fix[cat].indexOf(d.text)>=0&&d.cat!==cat){d.cat=cat;changed=true;}}
+  });
+  if(changed)saveConfig();
+})();
+
+/* ID REGISTRY — avoids UUID quoting issues in onclick attributes */
+var _R=[];
+function _r(v){_R.push(v);return _R.length-1;}
+function _g(i){return _R[i];}
+
+function autoTag(text){
+  var t=text.toLowerCase();
+  if(/\b(buy|get|order|purchase|shop|pick\s*up)\b/.test(t))return 'buy';
+  if(/\b(fix|repair|install|replace|adjust|service)\b/.test(t))return 'fix';
+  if(/\b(relist|repost|post|list)\b/.test(t))return 'list';
+  if(/\b(photo|photos|picture|pictures|shoot)\b/.test(t))return 'photo';
+  if(/\b(clean|wash|wipe)\b/.test(t))return 'clean';
+  return null;
+}
+
+/* ===================== LOAD DATA ===================== */
+async function loadData(){
+  var [bikes,photos,stTasks,costs]=await Promise.all([
+    sbGet('bikes','order=created_at.asc'),
+    sbGet('photos','order=created_at.asc'),
+    sbGet('standalone_tasks','order=created_at.asc'),
+    sbGet('costs','order=date.asc')
+  ]);
+  // Normalise bikes: map snake_case → camelCase, parse tasks jsonb
+  S.bikes=bikes.map(function(b){return {
+    id:b.id,name:b.name,bought:b.bought||0,frameSize:b.frame_size||'',
+    sold:b.sold||false,soldFor:b.sold_for||null,
+    listedAt:b.listed_at?new Date(b.listed_at).getTime():null,
+    listedPrice:b.listed_price||null,
+    createdAt:new Date(b.created_at).getTime(),
+    tasks:b.tasks||[]
+  };});
+  // Photos
+  S.photos={};
+  S.bikes.forEach(function(b){S.photos[b.id]={cover:null,listing:[]};});
+  photos.forEach(function(p){
+    if(!S.photos[p.bike_id])S.photos[p.bike_id]={cover:null,listing:[]};
+    var ph={id:p.id,bikeId:p.bike_id,type:p.type,url:p.storage_path,createdAt:new Date(p.created_at).getTime()};
+    if(p.type==='cover')S.photos[p.bike_id].cover=ph;
+    else S.photos[p.bike_id].listing.push(ph);
+  });
+  // Standalone tasks
+  S.standaloneTasks=stTasks.map(function(t){return {
+    id:t.id,text:t.text,autoTag:t.auto_tag,manualTag:t.manual_tag,cat:t.cat,
+    today:t.today,done:t.done,assignee:t.assignee,url:t.url,
+    createdAt:new Date(t.created_at).getTime()
+  };});
+  // Costs
+  S.costs={};
+  costs.forEach(function(c){
+    var bikeId=c.bike_id;
+    if(!S.costs[bikeId])S.costs[bikeId]=[];
+    S.costs[bikeId].push({id:c.id,bikeId:bikeId,amount:c.amount,note:c.note||'',paidBy:c.paid_by,date:new Date(c.date).getTime()});
+  });
+}
+function getUrl(p){
+  if(!p)return null;
+  // Supabase photos have a direct public URL stored in p.url
+  return p.url||null;
+}
+
+/* STATUS */
+function isFixCat(c){return c==='fix'||c==='repair'||c==='buy'||c==='order';}
+function isReadyCat(c){return c==='photo'||c==='list'||c==='listing'||c==='clean'||c==='other';}
+function etag(t){return t.autoTag||t.manualTag||t.cat||null;}
+function getBikeStatus(bike){
+  if(bike.sold)return 'sold';
+  if(bike.listedAt)return 'listed';
+  if((bike.tasks||[]).some(function(t){return isFixCat(etag(t))&&!t.done;}))return 'fix';
+  return 'ready';
+}
+var SL={fix:'Fix',ready:'Prep',listed:'Listed',sold:'Sold'};
+function isFixStage(tag){return tag==='fix'||tag==='buy'||tag==='repair'||tag==='order';}
+function isReadyStage(tag){return tag==='clean'||tag==='photo'||tag==='list'||tag==='listing'||tag==='other';}
+function getTodayStage(bike){
+  var tasks=(bike.tasks||[]).filter(function(t){return t.today&&!t.done;});
+  if(tasks.some(function(t){return isFixStage(etag(t));}))return 'fix';
+  if(tasks.some(function(t){return isReadyStage(etag(t));}))return 'ready';
+  if(bike.listedAt)return 'listed';
+  return '';
+}
+var SC={fix:'var(--blue)',ready:'var(--amber)',listed:'var(--green)',sold:'var(--text3)'};
+var SK={fix:'s-fix',ready:'s-ready',listed:'s-listed',sold:'s-sold'};
+function listingAge(bike){
+  if(!bike.listedAt)return '';
+  var h=Math.floor((Date.now()-bike.listedAt)/3600000);
+  if(h<24)return h<=1?'Listed 1h ago':'Listed '+h+'h ago';
+  var d=Math.floor(h/24);
+  return d===1?'Listed yesterday':'Listed '+d+' days ago';
+}
+function isStale(bike){return !!(bike.listedAt&&!bike.sold&&Date.now()-bike.listedAt>3*24*3600000);}
+function bikeAv(i){return 'av'+(i%6);}
+function bikeIn(b){return b.name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();}
+function pct(bike){if(!bike.tasks||!bike.tasks.length)return 0;return Math.round(bike.tasks.filter(function(t){return t.done;}).length/bike.tasks.length*100);}
+function allDone(bike){return bike.tasks&&bike.tasks.length>0&&bike.tasks.every(function(t){return t.done;});}
+
+/* SOUNDS */
+function playSound(type){
+  try{
+    var A=new(window.AudioContext||window.webkitAudioContext)();
+    function mk(freq,t0,dur,vol,tp){
+      vol=vol||0.2;tp=tp||'triangle';
+      var o=A.createOscillator(),g=A.createGain();o.connect(g);g.connect(A.destination);
+      o.type=tp;o.frequency.setValueAtTime(freq,t0);
+      g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+0.01);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+      o.start(t0);o.stop(t0+dur);
+    }
+    var t=A.currentTime;
+    if(type==='done'){mk(880,t,.15,.12);mk(1108,t+.07,.2,.1);}
+    else if(type==='listed'){mk(659,t,.12,.15);mk(880,t+.08,.15,.12);mk(1108,t+.16,.3,.1);}
+    else if(type==='sold'){
+      mk(659,t,.08,.15,'sine');mk(784,t+.06,.08,.15,'sine');mk(988,t+.12,.08,.15,'sine');
+      mk(1319,t+.20,.4,.2,'triangle');mk(1568,t+.22,.4,.18,'triangle');
+      mk(2093,t+.28,.5,.15,'sine');mk(2637,t+.32,.6,.12,'sine');
+      mk(523,t+.24,.2,.06,'sawtooth');
+    }
+    setTimeout(function(){A.close();},2000);
+  }catch(e){}
+}
+
+/* ANIMATIONS */
+function animDone(el){
+  playSound('done');
+  var cv=document.getElementById('fx');cv.style.display='block';cv.width=window.innerWidth;cv.height=window.innerHeight;
+  var ctx=cv.getContext('2d');
+  var r=el?el.getBoundingClientRect():null;
+  var cx=r?r.left+r.width/2:window.innerWidth/2,cy=r?r.top+r.height/2:window.innerHeight/2;
+  var sparks=Array.from({length:12},function(){return {x:cx,y:cy,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,r:Math.random()*3+2,color:'hsl('+(130+Math.random()*30)+',70%,65%)'};});
+  var st=null;
+  function frame(ts){
+    if(!st)st=ts;var el2=ts-st;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(el2>700){cv.style.display='none';return;}
+    var fade=1-el2/700;
+    sparks.forEach(function(s){s.x+=s.vx;s.y+=s.vy;s.vy+=.12;ctx.save();ctx.globalAlpha=fade;ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();ctx.restore();});
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function animListed(){
+  playSound('listed');
+  var cv=document.getElementById('fx');cv.style.display='block';cv.width=window.innerWidth;cv.height=window.innerHeight;
+  var ctx=cv.getContext('2d'),cx=cv.width/2,cy=cv.height*.42;
+  var stars=Array.from({length:18},function(){return {
+    x:cx+(Math.random()-.5)*80,y:cy+40,
+    vx:(Math.random()-.5)*3.5,vy:-(Math.random()*4+2),
+    r:Math.random()*5+3,alpha:1,
+    hue:130+Math.random()*30
+  };});
+  var st=null;
+  function frame(ts){
+    if(!st)st=ts;var el=ts-st;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(el>1600){cv.style.display='none';return;}
+    var fade=Math.max(0,1-el/1600);
+    stars.forEach(function(s){
+      s.x+=s.vx;s.y+=s.vy;s.vy+=.05;s.alpha=Math.max(0,fade*(1-el/1600));
+      if(s.alpha<=0)return;
+      ctx.save();ctx.globalAlpha=s.alpha;ctx.translate(s.x,s.y);
+      var r=s.r;ctx.beginPath();
+      for(var i=0;i<5;i++){ctx.lineTo(Math.cos((i*4*Math.PI/5)-Math.PI/2)*r,Math.sin((i*4*Math.PI/5)-Math.PI/2)*r);ctx.lineTo(Math.cos((i*4*Math.PI/5+2*Math.PI/5)-Math.PI/2)*r*.45,Math.sin((i*4*Math.PI/5+2*Math.PI/5)-Math.PI/2)*r*.45);}
+      ctx.closePath();ctx.fillStyle='hsl('+s.hue+',75%,60%)';ctx.fill();ctx.restore();
+    });
+    if(el<1400){
+      var sc=Math.min(1,el<180?el/180:el>1150?1-(el-1150)/250:1);
+      ctx.save();ctx.globalAlpha=sc*fade;ctx.translate(cx,cy);ctx.scale(sc,sc);
+      ctx.font='bold 40px -apple-system,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='#5ec47a';ctx.fillText('Listed! \u2713',0,0);ctx.restore();
+    }
+    if(el>140&&el<1400){
+      var sc2=Math.min(1,el<340?(el-140)/200:el>1150?1-(el-1150)/250:1);
+      ctx.save();ctx.globalAlpha=sc2*fade*.75;ctx.translate(cx,cy+42);ctx.scale(sc2,sc2);
+      ctx.font='500 15px -apple-system,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='#a09890';ctx.fillText('Good luck with the sale \uD83E\uDD1E',0,0);ctx.restore();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function animSold(){
+  playSound('sold');
+  var cv=document.getElementById('fx');cv.style.display='block';cv.width=window.innerWidth;cv.height=window.innerHeight;
+  var ctx=cv.getContext('2d'),cx=cv.width/2,cy=cv.height*.5;
+  var coins=Array.from({length:24},function(){return {x:cx+(Math.random()-.5)*60,y:cy+80,vx:(Math.random()-.5)*7,vy:-(Math.random()*10+5),r:Math.random()*14+9,rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.3,hue:35+Math.random()*25};});
+  var st=null;
+  function frame(ts){
+    if(!st)st=ts;var el=ts-st;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var fade=Math.max(0,1-el/1800);
+    if(el<1600){
+      var sc=Math.min(1,el<200?el/200:el>1300?1-(el-1300)/300:1);
+      ctx.save();ctx.globalAlpha=sc*fade;ctx.translate(cx,cy-30);ctx.scale(sc,sc);
+      ctx.font='bold 46px -apple-system,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='#f5c870';ctx.fillText('KA-CHING!',0,0);ctx.restore();
+    }
+    if(el>150&&el<1600){
+      var sc2=Math.min(1,el<350?(el-150)/200:el>1300?1-(el-1300)/300:1);
+      ctx.save();ctx.globalAlpha=sc2*fade*.8;ctx.translate(cx,cy+26);ctx.scale(sc2,sc2);
+      ctx.font='500 17px -apple-system,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='#a09890';ctx.fillText('Bike sold! \uD83C\uDF89',0,0);ctx.restore();
+    }
+    coins.forEach(function(c){
+      c.vy+=.28;c.y+=c.vy;c.x+=c.vx;c.rot+=c.rv;
+      var op=Math.max(0,fade*(1-el/1800));if(!op)return;
+      ctx.save();ctx.globalAlpha=op;ctx.translate(c.x,c.y);ctx.rotate(c.rot);
+      var scx=Math.abs(Math.cos(c.rot*2))*.7+.3;ctx.scale(scx,1);
+      ctx.beginPath();ctx.arc(0,0,c.r,0,Math.PI*2);ctx.fillStyle='hsl('+c.hue+',85%,58%)';ctx.fill();
+      ctx.strokeStyle='hsl('+c.hue+',90%,72%)';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='hsl('+c.hue+',60%,25%)';ctx.font='bold '+c.r+'px sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('\u20AC',0,0);ctx.restore();
+    });
+    if(el<1900)requestAnimationFrame(frame);
+    else{ctx.clearRect(0,0,cv.width,cv.height);cv.style.display='none';}
+  }
+  requestAnimationFrame(frame);
+}
+
+/* TOAST */
+var _tt;
+function showToast(m){var e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(_tt);_tt=setTimeout(function(){e.classList.remove('show');},2600);}
+
+/* ===================== PHOTOS ===================== */
+var fileIn=document.getElementById('file-in');
+fileIn.addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f||!S.photoTargetBike)return;fileIn.value='';
+  showToast('Uploading photo...');
+  var bikeId=S.photoTargetBike,mode=S.photoMode;
+  // Handle add-bike flow (bikeId === -1) — store blob temporarily
+  if(bikeId===-1){
+    var reader=new FileReader();
+    reader.onload=function(ev){S._nbPhotoBlob=new Blob([ev.target.result],{type:f.type});S._nbPhotoName=f.name.slice(0,20);renderAddBike();showToast('Photo ready');};
+    reader.readAsArrayBuffer(f);return;
+  }
+  // Upload to Supabase Storage
+  var path=bikeId+'/'+mode+'-'+Date.now()+'.jpg';
+  var reader2=new FileReader();
+  reader2.onload=async function(ev){
+    try{
+      var blob=new Blob([ev.target.result],{type:f.type});
+      // Delete old cover if replacing
+      if(mode==='cover'){
+        var old=S.photos[bikeId]&&S.photos[bikeId].cover;
+        if(old){
+          var oldPath=old.url.split('/flipkit-photos/')[1];
+          await sbDeletePhoto(oldPath);
+          await sbDelete('photos',old.id);
+        }
+      }
+      var publicUrl=await sbUploadPhoto(path,blob);
+      await sbInsert('photos',{bike_id:bikeId,type:mode,storage_path:publicUrl});
+      await loadData();render();
+      showToast(mode==='cover'?'Cover photo updated':'Photo added');
+    }catch(err){console.error(err);showToast('Could not save photo');}
+  };
+  reader2.onerror=function(){showToast('Could not read photo');};
+  reader2.readAsArrayBuffer(f);
+});
+function openPhotoPicker(bikeId,mode){S.photoTargetBike=bikeId;S.photoMode=mode;fileIn.click();}
+function openViewer(photo,bikeId){
+  S.viewerPhoto=photo;S.viewerBikeId=bikeId;
+  document.getElementById('viewer-img').src=getUrl(photo);
+  var l=S.photos[bikeId]&&S.photos[bikeId].listing||[];
+  var idx=l.findIndex(function(p){return p.id===photo.id;});
+  document.getElementById('viewer-count').textContent=idx>=0?(idx+1)+' / '+l.length:'';
+  document.getElementById('viewer').style.display='flex';
+}
+function closeViewer(){document.getElementById('viewer').style.display='none';S.viewerPhoto=null;}
+async function shareCurrentPhoto(){
+  if(!S.viewerPhoto)return;
+  try{
+    var url=getUrl(S.viewerPhoto);
+    if(navigator.share){await navigator.share({url:url,title:'Bike listing photo'});}
+    else{var a=document.createElement('a');a.href=url;a.download='bike-photo.jpg';a.click();showToast('Photo download started');}
+  }catch(e){if(e.name!=='AbortError')showToast('Could not share photo');}
+}
+async function deleteViewerPhoto(){
+  if(!S.viewerPhoto)return;
+  try{
+    var path=S.viewerPhoto.url.split('/flipkit-photos/')[1];
+    await sbDeletePhoto(path);
+    await sbDelete('photos',S.viewerPhoto.id);
+    closeViewer();await loadData();render();showToast('Photo deleted');
+  }catch(e){showToast('Could not delete photo');}
+}
+async function shareAllListingPhotos(bikeId){
+  var photos=S.photos[bikeId]&&S.photos[bikeId].listing||[];if(!photos.length){showToast('No listing photos yet');return;}
+  try{
+    var urls=photos.map(function(p){return p.url;});
+    if(navigator.share){await navigator.share({text:urls.join('\n'),title:'Bike listing photos'});}
+    else{urls.forEach(function(u,i){setTimeout(function(){var a=document.createElement('a');a.href=u;a.target='_blank';a.click();},i*400);});showToast('Opening '+urls.length+' photos...');}
+  }catch(e){if(e.name!=='AbortError')showToast('Could not share photos');}
+}
+
+/* NAV */
+function go(screen,bikeId){
+  S.prevScreen=S.screen;S.prevBikeId=S.bikeId;
+  if(screen==='bikes'&&S.screen!=='bikes'&&S.screen!=='detail'&&S.screen!=='add-bike')S.bikesFilter='all';
+  S.screen=screen;if(bikeId!==undefined)S.bikeId=bikeId;
+  closeAllModals();render();var sc=document.querySelector('.scrl');if(sc)sc.scrollTop=0;
+}
+function closeAllModals(){document.querySelectorAll('.overlay,.confirm-sheet').forEach(function(e){e.remove();});}
+
+/* SHARED HTML HELPERS */
+function navHtml(a){
+  return '<nav class="nav">'+
+    '<button class="nb '+(a==='today'?'on':'')+'" onclick="go(\'today\')"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="2" rx="1" fill="currentColor"/><rect x="3" y="10" width="16" height="2" rx="1" fill="currentColor"/><rect x="3" y="16" width="10" height="2" rx="1" fill="currentColor"/></svg>Today</button>'+
+    '<button class="nb '+(a==='bikes'?'on':'')+'" onclick="go(\'bikes\')"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="6" cy="16" r="3.5" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="16" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M6 16L9 8H16L17 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M12 8L13.5 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="6.5" r="1.8" fill="currentColor"/></svg>Bikes</button>'+
+    '<div style="position:absolute;bottom:calc(var(--sb) + 10px);right:max(12px,calc(50vw - 203px));display:flex;align-items:center;gap:4px;pointer-events:none">'+
+      '<div id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .4s"></div>'+
+    '</div>'+
+  '</nav>';
+}
+function fabHtml(){return '<button class="fab" onclick="openAddTaskModal(null)"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3v16M3 11h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>';}
+function chev(){return '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:var(--text3);flex-shrink:0"><path d="M4 2.5L8 6L4 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';}
+function checkIco(){return '<svg viewBox="0 0 11 11" fill="none" style="width:11px;height:11px"><path d="M2 5.5L4.5 8L9 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+function tagHtml(tag){if(!tag)return '';return '<span class="tag tg-'+tag+'">'+tag+'</span>';}
+function heroHtml(bikeId){
+  var cov=S.photos[bikeId]&&S.photos[bikeId].cover;
+  var cam='<button class="hero-cam" onclick="event.stopPropagation();openPhotoPicker('+bikeId+',\'cover\')"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M1 5.5A1.5 1.5 0 012.5 4h.4L4 2h8l1.1 2h.4A1.5 1.5 0 0115 5.5v7A1.5 1.5 0 0113.5 14h-11A1.5 1.5 0 011 12.5v-7z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="9" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg></button>';
+  if(cov)return '<div class="hero"><img src="'+getUrl(cov)+'" alt="">'+cam+'<div class="hero-grad"></div></div>';
+  return '<div class="hero"><div class="hero-ph"><svg width="32" height="32" viewBox="0 0 36 36" fill="none"><path d="M4 12A3 3 0 017 9h1.5L10 6h16l1.5 3H29a3 3 0 013 3v14a3 3 0 01-3 3H7a3 3 0 01-3-3V12z" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="5.5" stroke="currentColor" stroke-width="1.8"/></svg><span>Tap camera to add photo</span></div>'+cam+'</div>';
+}
+
+/* TODAY */
+function renderToday(){
+  var u0=S.users[0],u1=S.users[1];
+  var d0=u0.name.slice(0,1).toUpperCase(),d1=u1.name.slice(0,1).toUpperCase();
+  var tf=S.todayFilter;
+  var groups=[];
+  S.bikes.forEach(function(bike){
+    var tasks=(bike.tasks||[]).filter(function(t){return t.today;});
+    if(tf===0)tasks=tasks.filter(function(t){return t.assignee===0||t.assignee===null||t.assignee===undefined;});
+    else if(tf===1)tasks=tasks.filter(function(t){return t.assignee===1||t.assignee===null||t.assignee===undefined;});
+    if(!tasks.length)return;
+    var mn=Math.min.apply(null,tasks.map(function(t){return t.createdAt||0;}));
+    groups.push({bikeId:bike.id,bike:bike,tasks:tasks,_t:mn});
+  });
+  var stTasks=S.standaloneTasks.filter(function(t){return t.today;});
+  if(tf===0)stTasks=stTasks.filter(function(t){return t.assignee===0||t.assignee===null||t.assignee===undefined;});
+  else if(tf===1)stTasks=stTasks.filter(function(t){return t.assignee===1||t.assignee===null||t.assignee===undefined;});
+  var allItems=groups.concat(stTasks.map(function(t){return {type:'standalone',task:t,_t:t.createdAt||0};}));
+  allItems.sort(function(a,b){return a._t-b._t;});
+  var staleBikes=S.bikes.filter(function(b){return isStale(b);});
+
+  var hdr='<div class="row-sb"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Today</div>'+
+    '<div class="row" style="gap:8px">'+
+    '<div class="ptoggle">'+
+      '<button class="ptbtn '+(tf===0?'on':'')+'" onclick="S.todayFilter=S.todayFilter===0?\'all\':0;renderToday()">'+d0+'</button>'+
+      '<button class="ptbtn '+(tf===1?'on':'')+'" onclick="S.todayFilter=S.todayFilter===1?\'all\':1;renderToday()">'+d1+'</button>'+
+      '<button class="ptbtn '+(tf==='all'?'on':'')+'" onclick="S.todayFilter=\'all\';renderToday()">All</button>'+
+    '</div>'+
+    '<button onclick="openSettings()" style="background:none;border:none;cursor:pointer;color:var(--text3);display:flex;align-items:center;padding:2px">'+
+      '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 10a6.5 6.5 0 01-.09 1.06l1.5 1.17a.4.4 0 01.1.5l-1.42 2.46a.4.4 0 01-.49.17l-1.77-.71a6.6 6.6 0 01-.92.53l-.27 1.88a.4.4 0 01-.39.34H9.27a.4.4 0 01-.39-.34l-.27-1.88a6.6 6.6 0 01-.92-.53l-1.77.71a.4.4 0 01-.49-.17L4.01 12.73a.4.4 0 01.1-.5l1.5-1.17A6.5 6.5 0 015.5 10c0-.36.03-.72.09-1.06L4.1 7.77a.4.4 0 01-.1-.5L5.43 4.8a.4.4 0 01.49-.17l1.77.71c.29-.19.6-.37.92-.53l.27-1.88A.4.4 0 019.27 2.6h2.84a.4.4 0 01.39.34l.27 1.88c.32.16.63.34.92.53l1.77-.71a.4.4 0 01.49.17l1.42 2.46a.4.4 0 01-.1.5l-1.5 1.17c.06.34.09.7.09 1.06z" stroke="currentColor" stroke-width="1.5"/></svg>'+
+    '</button></div></div>';
+
+  var body='';
+  if(staleBikes.length){
+    body+='<div class="stale-banner"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 6v3.5M8 11.5h.01M2.5 13h11L8 2 2.5 13z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'+
+      '<span style="font-size:12px;color:var(--amber)"><strong>'+staleBikes.map(function(b){return b.name;}).join(', ')+'</strong> listed 3+ days</span></div>';
+  }
+  if(!allItems.length){
+    body+='<div class="empty">Nothing for today yet.<br>Tap <strong>+</strong> to add a task.</div>';
+  } else {
+    allItems.forEach(function(item){
+      if(item.bike){
+        var bike=item.bike;
+        var openCount=item.tasks.filter(function(t){return !t.done;}).length;
+        var cov=S.photos[bike.id]&&S.photos[bike.id].cover;
+        var thumb=cov
+          ?'<img src="'+getUrl(cov)+'" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">'
+          :'<div style="width:36px;height:36px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:var(--text3)">'+bikeIn(bike)+'</span></div>';
+      var bIdx=_r(bike.id);
+        var trows=item.tasks.map(function(t){
+          var tIdx=_r(t.id);
+          var tag=etag(t);var a=t.assignee;
+          var chip=(a===0||a===1)?'<div class="uchip u'+a+'" style="width:18px;height:18px;font-size:9px">'+S.users[a].name.slice(0,1).toUpperCase()+'</div>':'';
+          return '<div class="trow" id="trow-'+tIdx+'" onclick="toggleBT(_g('+bIdx+'),_g('+tIdx+'),this)">'+
+            '<div class="chk '+(t.done?'ok':'')+'">'+(t.done?checkIco():'')+' </div>'+
+            '<div style="flex:1;min-width:0"><div class="ttext '+(t.done?'done':'')+'">'+t.text+'</div>'+(t.url?'<a class="tlink" href="'+t.url+'" onclick="event.stopPropagation()" target="_blank">'+t.url+'</a>':'')+' </div>'+
+            tagHtml(tag)+chip+
+            '<button style="background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;flex-shrink:0" onclick="event.stopPropagation();openEditModal(\'bike\',_g('+bIdx+'),_g('+tIdx+'))">'+
+              '<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M10 2l2 2-7 7H3v-2L10 2z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+            '</button></div>';
+        }).join('');
+        var todayStage=getTodayStage(bike);
+        var stCls=todayStage?todayStage+'-stage':'';
+        var stClr=todayStage==='fix'?'var(--blue)':todayStage==='ready'?'var(--amber)':todayStage==='listed'?'var(--green)':'var(--text3)';
+        var allTodayDone=item.tasks.length>0&&item.tasks.every(function(t){return t.done;});
+        body+='<div class="bike-group '+(allTodayDone?'all-done-beat':stCls)+'" id="group-'+bIdx+'">'+
+          '<div class="bike-group-hdr">'+
+            thumb+
+            '<div style="flex:1;min-width:0">'+
+              '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+bike.name+'</div>'+
+              '<div style="font-size:11px;color:var(--text3)">'+openCount+' open'+(openCount!==1?' tasks':' task')+'</div>'+
+            '</div>'+
+            '<button class="btn-sm" style="font-size:11px;padding:4px 8px;flex-shrink:0;color:'+stClr+';border-color:'+stClr+'55" onclick="S.prevScreen=S.screen;go(\'detail\',_g('+bIdx+'))">View bike</button>'+
+          '</div>'+
+          '<div class="bike-group-tasks" id="tasks-'+bIdx+'">'+
+          '<div style="padding:6px 11px 0">'+
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
+              '<span style="font-size:10px;color:var(--text3)">'+item.tasks.filter(function(t){return t.done;}).length+' / '+item.tasks.length+' done</span>'+
+              '<span style="font-size:10px;color:'+stClr+'">'+Math.round(item.tasks.filter(function(t){return t.done;}).length/Math.max(1,item.tasks.length)*100)+'%</span>'+
+            '</div>'+
+            '<div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:6px;overflow:hidden">'+
+              '<div style="height:100%;border-radius:2px;background:'+stClr+';width:'+Math.round(item.tasks.filter(function(t){return t.done;}).length/Math.max(1,item.tasks.length)*100)+'%;transition:width .3s ease"></div>'+
+            '</div>'+
+          '</div>'+
+          trows+
+            '<div class="add-task-link" onclick="openAddTaskModal(_g('+bIdx+'))">'+
+              '<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'+
+              'Add a task</div>'+
+          '</div>'+
+          '<div class="done-today-reveal'+(allTodayDone?' show':'')+'">'+
+            '<button class="done-today-btn" onclick="confirmTodayDone(_g('+bIdx+'),this)">'+
+              '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+              'Mark as done'+
+            '</button>'+
+          '</div>'+
+        '</div>';
+      } else {
+        var t=item.task;var tag=etag(t);var a=t.assignee;
+        var tIdx=_r(t.id);
+        var chip=(a===0||a===1)?'<div class="uchip u'+a+'" style="width:18px;height:18px;font-size:9px">'+S.users[a].name.slice(0,1).toUpperCase()+'</div>':'';
+        body+='<div class="standalone-row" id="st-'+tIdx+'" onclick="toggleST(_g('+tIdx+'),this)">'+
+          '<div class="chk '+(t.done?'ok':'')+'">'+(t.done?checkIco():'')+' </div>'+
+          '<div style="flex:1;min-width:0"><div class="ttext '+(t.done?'done':'')+'">'+t.text+'</div>'+(t.url?'<a class="tlink" href="'+t.url+'" onclick="event.stopPropagation()" target="_blank">'+t.url+'</a>':'')+' </div>'+
+          tagHtml(tag)+chip+
+          '<button style="background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;flex-shrink:0" onclick="event.stopPropagation();openEditModal(\'standalone\',null,_g('+tIdx+'))">'+
+            '<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M10 2l2 2-7 7H3v-2L10 2z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+          '</button></div>';
+      }
+    });
+  }
+  document.getElementById('app').innerHTML='<div class="hdr">'+hdr+'</div><div class="scrl">'+body+'</div>'+fabHtml()+navHtml('today');
+}
+
+/* TOGGLE TASKS */
+async function toggleBT(bikeId,taskId,rowEl){
+  if(S._toggling===bikeId+'_'+taskId)return;
+  S._toggling=bikeId+'_'+taskId;
+  setTimeout(function(){S._toggling=null;},600);
+
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike){S._toggling=null;return;}
+  var task=bike.tasks.find(function(t){return t.id===taskId;});if(!task){S._toggling=null;return;}
+  var wasDone=task.done;
+  var savedTag=etag(task);
+  task.done=!task.done;
+  // Save tasks array back to Supabase
+  await sbUpdate('bikes',bikeId,{tasks:bike.tasks});
+  await loadData();
+
+  var fb=S.bikes.find(function(b){return b.id===bikeId;});
+  if(!fb){render();return;}
+  var ft=fb.tasks.find(function(t){return t.id===taskId;});
+
+  if(!wasDone){
+    if((savedTag==='buy'||savedTag==='fix')&&bikeId){
+      render();setTimeout(function(){openCostPrompt(bikeId,{text:ft?ft.text:'task',id:taskId});},180);return;
+    }
+    var listTs=fb.tasks.filter(function(t){return etag(t)==='list';});
+    if(listTs.length>0&&listTs.every(function(t){return t.done;})){
+      render();setTimeout(function(){triggerAutoListed(bikeId);},300);return;
+    }
+    if(S.screen==='today'){
+      var todayTs=fb.tasks.filter(function(t){return t.today;});
+      if(todayTs.length>0&&todayTs.every(function(t){return t.done;})){
+        render();setTimeout(function(){revealTodayDone(bikeId);},280);return;
+      }
+    }
+  }
+  render();
+}
+async function toggleST(taskId,rowEl){
+  var task=S.standaloneTasks.find(function(t){return t.id===taskId;});if(!task)return;
+  task.done=!task.done;
+  await sbUpdate('standalone_tasks',taskId,{done:task.done});
+  if(task.done){
+    var el=document.getElementById('st-'+taskId);
+    animDone(el);
+    if(el){el.classList.add('exit');setTimeout(async function(){await loadData();if(S.screen==='today')renderToday();},360);}
+    return;
+  }
+  await loadData();render();
+}
+function revealTodayDone(bikeId){
+  var group=document.getElementById('group-'+bikeId);if(!group)return;
+  group.classList.remove('fix-stage','ready-stage','listed-stage');
+  group.classList.add('all-done-beat');
+  var reveal=group.querySelector('.done-today-reveal');
+  if(reveal){reveal.classList.add('show');var btn=reveal.querySelector('.done-today-btn');if(btn)btn.style.display='flex';}
+}
+function showTodayDoneConfirm(bikeId){revealTodayDone(bikeId);}
+async function confirmTodayDone(bikeId,btn){
+  document.querySelectorAll('.confirm-sheet').forEach(function(e){e.remove();});
+  playSound('done');
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  (bike.tasks||[]).filter(function(t){return t.today&&t.done;}).forEach(function(t){t.today=false;});
+  await sbUpdate('bikes',bikeId,{tasks:bike.tasks});
+  await loadData();
+  var card=document.getElementById('group-'+bikeId);
+  if(card){animDone(card);card.classList.add('exit');setTimeout(function(){renderToday();showToast('Done for today \u2713');},440);}
+  else renderToday();
+}
+
+/* BIKES SCREEN */
+function renderBikes(){
+  var f=S.bikesFilter;
+  var allActive=S.bikes.filter(function(b){return !b.sold;});
+  var soldBikes=S.bikes.filter(function(b){return b.sold;});
+  var counts={all:allActive.length,sold:soldBikes.length};
+  ['fix','ready','listed'].forEach(function(s){counts[s]=allActive.filter(function(b){return getBikeStatus(b)===s;}).length;});
+  var staleBikes=allActive.filter(function(b){return isStale(b);});
+  var filtered=f==='sold'?soldBikes:f==='all'?allActive:allActive.filter(function(b){return getBikeStatus(b)===f;});
+
+  var hdr='<div class="row-sb"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Your Bikes</div></div>'+
+    '<div class="spills">'+
+      '<button class="spill sa '+(f==='all'?'on':'')+'" onclick="S.bikesFilter=\'all\';renderBikes()">All '+counts.all+'</button>'+
+      '<button class="spill sf '+(f==='fix'?'on':'')+'" onclick="S.bikesFilter=\'fix\';renderBikes()">Fix '+counts.fix+'</button>'+
+      '<button class="spill sr '+(f==='ready'?'on':'')+'" onclick="S.bikesFilter=\'ready\';renderBikes()">Prep '+counts.ready+'</button>'+
+      '<button class="spill sl '+(f==='listed'?'on':'')+'" onclick="S.bikesFilter=\'listed\';renderBikes()">Listed '+counts.listed+'</button>'+
+      '<button class="spill ss '+(f==='sold'?'on':'')+'" onclick="S.bikesFilter=\'sold\';renderBikes()">Sold '+counts.sold+'</button>'+
+    '</div>';
+
+  var body='';
+  if(staleBikes.length&&f!=='sold'){
+    body+='<div class="stale-banner" style="margin-top:8px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 6v3.5M8 11.5h.01M2.5 13h11L8 2 2.5 13z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'+
+      '<span style="font-size:12px;color:var(--amber)"><strong>'+staleBikes.length+' listing'+(staleBikes.length>1?'s':'')+' up 3+ days \u2014 </strong>'+staleBikes.map(function(b){return b.name;}).join(', ')+'</span></div>';
+  }
+  if(!filtered.length){
+    body+='<div class="empty">'+(f==='all'?'No bikes yet.<br>Tap <strong>Add</strong> to start.':'No bikes in this status yet.')+'</div>';
+  } else {
+    if(f==='sold'){
+      var tp=soldBikes.reduce(function(a,b){return a+((b.soldFor||0)-(b.bought||0));},0);
+      var ti=soldBikes.reduce(function(a,b){return a+(b.bought||0);},0);
+      body+='<div class="sold-total" style="margin-top:8px"><div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Total invested</div><div style="font-size:15px;font-weight:600">\u20AC'+ti+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Total profit</div><div style="font-size:18px;font-weight:700;color:var(--green)">+\u20AC'+tp+'</div></div></div>';
+    }
+    body+='<div class="bgrid" style="margin-top:8px">';
+    filtered.forEach(function(bike){
+      var cov=S.photos[bike.id]&&S.photos[bike.id].cover;
+      var idx=S.bikes.indexOf(bike);
+      var status=getBikeStatus(bike);var stale=isStale(bike);
+      var ts=bike.tasks||[];var sub='';
+      if(status==='fix'){var open=ts.filter(function(t){return isFixCat(etag(t))&&!t.done;});sub=open.length?open.length+' fix/buy task'+(open.length!==1?'s':''):'Fix tasks done';}
+      else if(status==='ready'){var rt=ts.filter(function(t){return isReadyCat(etag(t));});sub=rt.length?rt.filter(function(t){return t.done;}).length+'/'+rt.length+' prep tasks done':'No prep tasks';}
+      else if(status==='listed'){sub=stale?'\u26a0 '+listingAge(bike):listingAge(bike);}
+      else if(status==='sold'){sub=bike.soldFor?'+\u20AC'+(bike.soldFor-bike.bought)+' profit':'Sold';}
+      else{sub=pct(bike)+'% complete';}
+      var photoArea=cov
+        ?'<img src="'+getUrl(cov)+'" alt="">'
+        :'<div class="gc-ph"><div class="av '+bikeAv(idx)+'" style="width:34px;height:34px;font-size:12px">'+bikeIn(bike)+'</div><span>No photo</span></div>';
+      var bIdx=_r(bike.id);
+      body+='<div class="gc" onclick="go(\'detail\',_g('+bIdx+'))">'+
+        '<div class="gc-photo">'+photoArea+
+          '<div class="gc-cam" onclick="event.stopPropagation();openPhotoPicker(_g('+bIdx+'),\'cover\')">'+
+            '<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M1 5A1.3 1.3 0 012.3 3.7h.35L3.5 2h7l.85 1.7h.35A1.3 1.3 0 0113 5v6a1.3 1.3 0 01-1.3 1.3H2.3A1.3 1.3 0 011 11V5z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7.8" r="2.1" stroke="currentColor" stroke-width="1.2"/></svg>'+
+          '</div>'+
+          (stale?'<div style="position:absolute;top:6px;left:6px;background:var(--amber);border-radius:5px;padding:2px 5px;font-size:9px;font-weight:700;color:#160f00">3+ days</div>':'')+
+          (bike.sold?'<div style="position:absolute;top:6px;left:6px;background:var(--green);border-radius:5px;padding:2px 5px;font-size:9px;font-weight:700;color:#051510">SOLD</div>':'')+
+        '</div>'+
+        '<div class="gc-bar" style="background:var(--border2);position:relative">'+
+          '<div style="position:absolute;left:0;top:0;height:100%;width:'+pct(bike)+'%;background:'+SC[status]+';transition:width .4s ease;border-radius:0 2px 2px 0"></div>'+
+        '</div>'+
+        '<div class="gc-body st-'+status+'"><div class="gc-name">'+bike.name+'</div>'+
+          '<div class="gc-sub" style="color:'+(stale?'var(--amber)':'var(--text3)')+'">'+sub+'</div>'+
+        '</div></div>';
+    });
+    body+='</div>';
+  }
+  document.getElementById('app').innerHTML='<div class="hdr">'+hdr+'</div><div class="scrl">'+body+'</div>'+
+    '<button class="fab" onclick="go(\'add-bike\')" aria-label="Add bike"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4v14M4 11h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>'+
+    navHtml('bikes');
+}
+
+/* BIKE DETAIL */
+function renderDetail(){
+  var bike=S.bikes.find(function(b){return b.id===S.bikeId;});if(!bike){go('bikes');return;}
+  var bIdx=_r(bike.id);
+  var idx=S.bikes.indexOf(bike);
+  var cov=S.photos[bike.id]&&S.photos[bike.id].cover;
+  var listing=S.photos[bike.id]&&S.photos[bike.id].listing||[];
+  var status=getBikeStatus(bike);var stale=isStale(bike);
+  var costs=S.costs[bike.id]||[];
+  var allTasks=bike.tasks||[];
+  var todayT=allTasks.filter(function(t){return t.today&&!t.done;});
+  var upNext=allTasks.filter(function(t){return !t.today&&!t.done;});
+  var doneT=allTasks.filter(function(t){return t.done;});
+  var p=pct(bike);
+  var stageClr=(function(){
+    if(allTasks.some(function(t){return !t.done&&(etag(t)==='fix'||etag(t)==='buy');}))return 'var(--blue)';
+    if(allTasks.some(function(t){return !t.done&&(etag(t)==='clean'||etag(t)==='photo'||etag(t)==='list');}))return 'var(--amber)';
+    if(bike.listedAt)return 'var(--green)';
+    return 'var(--text3)';
+  })();
+  var totalCostVal=costs.reduce(function(a,c){return a+c.amount;},0);
+  var totalInvested=bike.bought+totalCostVal;
+  var profitVal=bike.sold?(bike.soldFor-totalInvested):null;
+
+  var hdr='<div class="row">'+
+    '<button class="back-btn" onclick="goBack()"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>'+
+    '<div class="av '+bikeAv(idx)+'" style="width:28px;height:28px;font-size:10px">'+bikeIn(bike)+'</div>'+
+    '<div style="flex:1;min-width:0">'+
+      '<input id="bike-name-inp" '+
+      'style="font-size:17px;font-weight:700;background:none;border:none;outline:none;color:var(--text);width:100%;font-family:inherit;padding:0" '+
+      'value="'+bike.name.split('"').join('&quot;')+'" '+
+      'onblur="saveBikeName(_g('+bIdx+'),this.value)" '+
+      'onkeydown="if(event.key===\'Enter\')this.blur()">'+
+      '<div style="font-size:11px;color:var(--text3)">€'+bike.bought+' bought'+(bike.sold?' · Sold €'+bike.soldFor:'')+' </div>'+
+    '</div>'+
+    '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;background:'+SC[status]+'22;color:'+SC[status]+';flex-shrink:0">'+SL[status]+'</span>'+
+  '</div>';
+
+  var body='';
+  body+='<div style="position:relative;border-radius:var(--r);overflow:hidden;margin-bottom:10px">'+
+    (cov?'<div class="hero tall"><img src="'+getUrl(cov)+'" alt=""><div class="hero-grad"></div><div class="hero-info"><h3>'+bike.name+'</h3><p>€'+bike.bought+'</p></div></div>'
+        :'<div class="hero" style="aspect-ratio:2/1"><div class="hero-ph"><svg width="32" height="32" viewBox="0 0 36 36" fill="none"><path d="M4 12A3 3 0 017 9h1.5L10 6h16l1.5 3H29a3 3 0 013 3v14a3 3 0 01-3 3H7a3 3 0 01-3-3V12z" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="5.5" stroke="currentColor" stroke-width="1.8"/></svg><span>Tap camera to add photo</span></div></div>')+
+    '<button class="hero-cam" onclick="openPhotoPicker(_g('+bIdx+'),\'cover\')"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M1 5.5A1.5 1.5 0 012.5 4h.4L4 2h8l1.1 2h.4A1.5 1.5 0 0115 5.5v7A1.5 1.5 0 0113.5 14h-11A1.5 1.5 0 011 12.5v-7z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="9" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg></button>'+
+    (bike.sold?'<div style="position:absolute;top:10px;left:10px;background:var(--green);color:#051510;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">SOLD</div>':'')+
+  '</div>';
+
+  body+='<div style="display:flex;gap:6px;margin-bottom:6px">'+
+    '<div class="stat-pill"><span class="stat-pill-lbl">Invested</span><span class="stat-pill-val">\u20ac'+totalInvested+'</span></div>'+
+    '<div class="stat-pill"><span class="stat-pill-lbl">Tasks</span><span class="stat-pill-val">'+doneT.length+'/'+allTasks.length+'</span></div>'+
+    (profitVal!==null?'<div class="stat-pill"><span class="stat-pill-lbl">Profit</span><span class="stat-pill-val" style="color:var(--green)">+\u20ac'+profitVal+'</span></div>':'')+
+    '<div class="stat-pill editable" onclick="this.querySelector(\'input\').focus()" style="cursor:text">'+
+      '<span class="stat-pill-lbl">Frame size</span>'+
+      '<input id="frame-size-inp" style="background:none;border:none;outline:none;color:var(--text);font-size:15px;font-weight:700;width:100%;font-family:inherit;padding:0;cursor:text" '+
+        'placeholder="\u2014" value="'+(bike.frameSize||'')+'" '+
+        'onblur="saveFrameSize(_g('+bIdx+'),this.value)" '+
+        'onkeydown="if(event.key===\'Enter\')this.blur()">'+
+    '</div>'+
+  '</div>';
+  body+='<div class="pbar" style="height:4px;margin-bottom:10px;border-radius:3px"><div class="pbar-f" style="width:'+p+'%;background:'+stageClr+'"></div></div>';
+  if(stale)body+='<div class="stale-banner"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 6v3.5M8 11.5h.01M2.5 13h11L8 2 2.5 13z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span style="font-size:12px;color:var(--amber)">'+listingAge(bike)+' — consider refreshing</span></div>';
+
+  function taskRow(t,showSch){
+    var tIdx=_r(t.id);
+    var tag=etag(t);var a=t.assignee;
+    var chip=(a===0||a===1)
+      ?'<div class="uchip u'+a+'" style="width:20px;height:20px" onclick="event.stopPropagation();cycleAssignee(_g('+bIdx+'),_g('+tIdx+'))">'+S.users[a].name.slice(0,1).toUpperCase()+'</div>'
+      :'<div class="uchip un" style="width:20px;height:20px;font-size:13px" onclick="event.stopPropagation();cycleAssignee(_g('+bIdx+'),_g('+tIdx+'))">·</div>';
+    var tagColor=tag==='fix'||tag==='buy'?'var(--blue)':tag==='clean'||tag==='photo'||tag==='list'?'var(--amber)':'var(--text3)';
+    return '<div class="trow" style="border-left:2px solid '+tagColor+'33;padding-left:6px" onclick="toggleBT(_g('+bIdx+'),_g('+tIdx+'),this)">'+
+      '<div class="chk '+(t.done?'ok':'')+'">'+(t.done?checkIco():'')+' </div>'+
+      '<div style="flex:1;min-width:0"><div class="ttext '+(t.done?'done':'')+'">'+t.text+'</div></div>'+
+      tagHtml(tag)+chip+
+      '<button style="background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;flex-shrink:0" onclick="event.stopPropagation();openEditModal(\'bike\',_g('+bIdx+'),_g('+tIdx+'))"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M10 2l2 2-7 7H3v-2L10 2z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+      (showSch?'<button class="sch-btn" onclick="event.stopPropagation();scheduleTask(_g('+bIdx+'),_g('+tIdx+'))">+today</button>':'')+
+    '</div>';
+  }
+
+  body+='<div class="task-section">'+
+    '<div class="task-section-hdr">'+
+      '<span class="task-section-hdr-title" style="color:'+stageClr+'">Tasks</span>'+
+      '<button class="btn-sm" style="background:var(--amber);color:#160f00;border-color:var(--amber);font-size:11px;padding:4px 10px" onclick="openAddTaskModal(_g('+bIdx+'),true)">+ Add task</button>'+
+    '</div>';
+  if(todayT.length)body+='<div style="padding:0 12px;border-bottom:0.5px solid var(--border)">'+
+    '<div style="font-size:10px;font-weight:600;color:var(--text3);padding:7px 0 3px;letter-spacing:.06em">TODAY</div>'+
+    todayT.map(function(t){return taskRow(t,false);}).join('')+'</div>';
+  if(upNext.length)body+='<div style="padding:0 12px;border-bottom:0.5px solid var(--border)">'+
+    '<div style="font-size:10px;font-weight:600;color:var(--text3);padding:7px 0 3px;letter-spacing:.06em">UP NEXT</div>'+
+    upNext.map(function(t){return taskRow(t,true);}).join('')+'</div>';
+  if(doneT.length)body+='<div style="padding:0 12px">'+
+    '<div style="font-size:10px;font-weight:600;color:var(--text3);padding:7px 0 3px;letter-spacing:.06em">DONE</div>'+
+    doneT.map(function(t){return taskRow(t,false);}).join('')+'</div>';
+  if(!allTasks.length)body+='<div style="padding:14px 12px;font-size:13px;color:var(--text3)">No tasks yet.</div>';
+  body+='</div>';
+
+  var allCostRows=[{amount:bike.bought,note:'Purchase price',date:bike.createdAt,paidBy:1,_fixed:true}].concat(costs);
+  var grandTotal=allCostRows.reduce(function(a,c){return a+c.amount;},0);
+
+  var payoutHtml='';
+  if(bike.sold&&bike.soldFor){
+    var d0costs=costs.filter(function(c){return c.paidBy===0;}).reduce(function(a,c){return a+c.amount;},0);
+    var d1costs=costs.filter(function(c){return c.paidBy===1;}).reduce(function(a,c){return a+c.amount;},0)+bike.bought;
+    var totalCosts=costs.reduce(function(a,c){return a+c.amount;},0)+bike.bought;
+    var net=bike.soldFor-totalCosts;
+    var p0=Math.round((net/2+d0costs)*100)/100;
+    var p1=Math.round((net/2+d1costs)*100)/100;
+    var u0n=S.users[0].name,u1n=S.users[1].name;
+    payoutHtml='<div style="background:var(--greenBg);border:0.5px solid rgba(94,196,122,.3);border-radius:var(--r-sm);padding:12px 14px;margin:0 12px 10px">'+
+      '<div style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-bottom:10px">Payout</div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<div style="flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:3px">'+u0n+'</div><div style="font-size:18px;font-weight:700;color:var(--green)">\u20AC'+p0+'</div></div>'+
+        '<div style="flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:3px">'+u1n+'</div><div style="font-size:18px;font-weight:700;color:var(--green)">\u20AC'+p1+'</div></div>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--text3);margin-top:8px">Based on who paid for what.</div>'+
+    '</div>';
+  }
+
+  body+='<div class="task-section" style="margin-bottom:8px">'+
+    '<div class="task-section-hdr">'+
+      '<div><span class="task-section-hdr-title" style="color:var(--amber)">Costs</span><span style="font-size:12px;color:var(--text3);margin-left:8px">Total \u20ac'+grandTotal+'</span></div>'+
+      '<button class="btn-sm" style="background:var(--amber);color:#160f00;border-color:var(--amber);font-size:11px;padding:4px 10px" onclick="openAddCostModal(_g('+bIdx+'))">+ Add</button>'+
+    '</div>'+
+    payoutHtml+
+    '<div style="padding:0 12px">'+
+    allCostRows.map(function(c){
+      var cIdx=c._fixed?-1:_r(c.id);
+      var paidLabel=(c.paidBy===0||c.paidBy===1)?'<span style="font-size:10px;color:var(--text3);margin-left:4px">'+S.users[c.paidBy].name+'</span>':'';
+      return '<div class="cost-row">'+
+        '<div style="flex:1"><span style="font-size:13px">\u20AC'+c.amount+' <span style="color:var(--text3)">'+c.note+'</span>'+paidLabel+'</span>'+
+        '<div style="font-size:10px;color:var(--text3);margin-top:1px">'+new Date(c.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+'</div></div>'+
+        (!c._fixed?'<button style="background:none;border:none;cursor:pointer;color:var(--text3);padding:2px" onclick="deleteCost(_g('+cIdx+'),_g('+bIdx+'))"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4h10M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4M3 4l.7 7.3A1 1 0 004.7 12h4.6a1 1 0 001-.7L11 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>':'')+
+      '</div>';
+    }).join('')+
+    '<div style="padding:9px 0;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">'+
+      '<span style="font-size:12px;font-weight:600;color:var(--text2)">Total invested</span>'+
+      '<span style="font-size:14px;font-weight:700;color:var(--text)">\u20AC'+grandTotal+'</span>'+
+    '</div>'+
+    '</div>'+
+  '</div>';
+
+  body+='<div class="task-section" style="margin-bottom:8px">'+
+    '<div class="task-section-hdr">'+
+      '<span class="task-section-hdr-title" style="color:var(--green)">Listing photos</span>'+
+      (listing.length?'<button class="btn-sm" onclick="shareAllListingPhotos(_g('+bIdx+'))"><svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 4L6.5 1l3 3M1 10v1.5A1.5 1.5 0 002.5 13h8A1.5 1.5 0 0012 11.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Share all ('+listing.length+')</button>':'')+
+    '</div>'+
+    '<div style="padding:8px 12px">'+
+      '<div class="pgrid">'+
+        listing.map(function(ph){var phIdx=_r(ph.id);return '<img class="pthumb" src="'+getUrl(ph)+'" onclick="openViewer(S.photos[_g('+bIdx+')].listing.find(function(x){return x.id===_g('+phIdx+');}),_g('+bIdx+'))" alt="">';}).join('')+
+        '<button class="padd-btn" onclick="openPhotoPicker(_g('+bIdx+'),\'listing\')">+</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+
+  if(!bike.sold){
+    if(bike.listedAt){
+      body+='<div style="padding:8px 0 2px"><span style="font-size:13px;color:var(--green)">\u2713 '+listingAge(bike)+(bike.listedPrice?' · \u20ac'+bike.listedPrice:'')+'</span> '+
+        '<button class="btn-sm" onclick="unmarkListed(_g('+bIdx+'))" style="margin-left:6px">Unlist</button></div>';
+    }
+    body+='<div style="display:flex;gap:8px;margin-top:10px;margin-bottom:4px">'+
+      (!bike.listedAt?
+        '<div style="flex:1">'+
+          '<button class="btn" onclick="revealListedPrice(_g('+bIdx+'))" style="background:var(--bg);color:var(--green);border:1.5px solid var(--green)">Mark as listed</button>'+
+          '<div class="inline-price-reveal" id="listed-price-reveal">'+
+            '<input class="inp" id="listing-price-inp" type="number" placeholder="Listing price \u20ac (optional)" inputmode="decimal" style="margin-top:6px">'+
+            '<button class="btn" style="background:var(--green);color:#051510;border:none;margin-top:6px" onclick="confirmListed(_g('+bIdx+'))">Confirm listed</button>'+
+          '</div>'+
+        '</div>':'<div style="flex:1"></div>')+
+      '<div style="flex:1">'+
+        '<button class="btn" onclick="openSoldModal(_g('+bIdx+'))" style="background:var(--green);color:#051510;border:none">Mark as sold</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  body+='<div style="margin-top:6px;margin-bottom:8px"><button class="btn" onclick="deleteBike(_g('+bIdx+'))" style="background:var(--red);color:#fff;border:none">Delete this bike</button></div>';
+  document.getElementById('app').innerHTML='<div class="hdr">'+hdr+'</div><div class="scrl">'+body+'</div>'+navHtml('bikes');
+}
+function revealListedPrice(bikeId){
+  var el=document.getElementById('listed-price-reveal');
+  if(el){el.classList.add('open');var inp=document.getElementById('listing-price-inp');if(inp)setTimeout(function(){inp.focus();},50);}
+}
+function revealSoldPrice(bikeId){
+  var el=document.getElementById('sold-price-reveal');
+  if(el){el.classList.add('open');var inp=document.getElementById('sold-price-inp');if(inp)setTimeout(function(){inp.focus();},50);}
+}
+
+
+/* ADD BIKE */
+function renderAddBike(){
+  var hdr='<div class="row"><button class="back-btn" onclick="go(\'bikes\')"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><div style="font-size:17px;font-weight:700">Add a bike</div></div>';
+  var dtHtml=S.defaultTasks.map(function(d,i){
+    return '<div class="dtask-row"><span class="tag tg-'+d.cat+'" style="flex-shrink:0">'+d.cat+'</span><span style="flex:1;font-size:13px;color:var(--text2)">'+d.text+'</span>'+
+      '<button class="toggle '+(d.on?'on':'off')+'" onclick="S.defaultTasks['+i+'].on=!S.defaultTasks['+i+'].on;saveConfig();renderAddBike()"></button></div>';
+  }).join('');
+  var body='<div class="card" style="padding:14px">'+
+    '<div class="form-group"><label class="lbl">Bike name</label><input class="inp" id="nb-name" type="text" placeholder="e.g. Sparta City Blue" oninput="S._nbName=this.value" value="'+(S._nbName||'')+'"></div>'+
+    '<div class="form-group"><label class="lbl">Purchase price (\u20AC)</label><input class="inp" id="nb-price" type="number" placeholder="0" inputmode="decimal" oninput="S._nbPrice=this.value" value="'+(S._nbPrice||'')+'"></div>'+
+    '<label class="lbl" style="margin-top:2px">Photo <span style="color:var(--text3);font-size:11px">(optional)</span></label>'+
+    '<div class="nb-photo-box" onclick="openPhotoPicker(-1,\'cover\')">'+
+      (S._nbPhotoBlob?'<img src="'+URL.createObjectURL(S._nbPhotoBlob)+'" alt="">':
+        '<svg width="28" height="28" viewBox="0 0 36 36" fill="none" style="opacity:.4"><path d="M4 12A3 3 0 017 9h1.5L10 6h16l1.5 3H29a3 3 0 013 3v14a3 3 0 01-3 3H7a3 3 0 01-3-3V12z" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="5.5" stroke="currentColor" stroke-width="1.8"/></svg>'+
+        '<span style="font-size:12px;margin-top:4px">Tap to add cover photo</span>')+
+    '</div>'+
+    '<div style="height:12px"></div>'+
+    '<button class="btn btn-p" onclick="doAddBike()">Save bike</button></div>'+
+    '<div class="sec">Auto-loaded tasks</div>'+
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Added to every new bike. Toggle off what you don\'t need.</div>'+
+    '<div class="card" style="padding:0 12px">'+dtHtml+'</div>';
+  document.getElementById('app').innerHTML='<div class="hdr">'+hdr+'</div><div class="scrl">'+body+'</div>'+navHtml('bikes');
+  setTimeout(function(){var el=document.getElementById('nb-name');if(el)el.focus();},60);
+}
+
+async function doAddBike(){
+  var name=(S._nbName||document.getElementById('nb-name').value||'').trim();
+  var price=parseFloat(S._nbPrice||document.getElementById('nb-price').value||0)||0;
+  if(!name){showToast('Give the bike a name');return;}
+  var defaultTs=S.defaultTasks.filter(function(d){return d.on;}).map(function(d){
+    return {id:crypto.randomUUID(),text:d.text,autoTag:d.cat,manualTag:null,cat:d.cat,today:false,done:false,assignee:null,url:null,createdAt:Date.now()};
+  });
+  var frameSize=S._nbSize||'';
+  var photoBlob=S._nbPhotoBlob;
+  S._nbName='';S._nbPrice='';S._nbSize='';S._nbPhotoBlob=null;S._nbPhotoName='';
+  var row=await sbInsert('bikes',{name:name,bought:price,frame_size:frameSize||null,tasks:defaultTs,sold:false});
+  var id=row.id;
+  if(photoBlob){
+    var path=id+'/cover-'+Date.now()+'.jpg';
+    var publicUrl=await sbUploadPhoto(path,photoBlob);
+    await sbInsert('photos',{bike_id:id,type:'cover',storage_path:publicUrl});
+  }
+  await loadData();
+  if(S._returnToAddTask){
+    S._returnToAddTask=false;S.modalData.bikeId=id;
+    S.screen='today';render();renderTaskModal();
+  } else {
+    S.bikeId=id;S.screen='detail';render();
+  }
+  showToast('Bike added!');
+}
+
+/* TASK MODAL */
+function openAddTaskModal(bikeId,fromDetail){
+  fromDetail=!!fromDetail;
+  S.modalData={bikeId:bikeId||null,text:'',manualTag:null,assignee:null,url:'',mode:'add',today:!fromDetail,fromDetail:fromDetail};
+  renderTaskModal();
+}
+function openEditModal(type,bikeId,taskId){
+  var task;
+  if(type==='bike'){var b=S.bikes.find(function(b){return b.id===bikeId;});task=b&&b.tasks&&b.tasks.find(function(t){return t.id===taskId;});}
+  else task=S.standaloneTasks.find(function(t){return t.id===taskId;});
+  if(!task)return;
+  S.modalData={type:type,bikeId:bikeId,taskId:taskId,text:task.text,manualTag:task.manualTag||null,assignee:task.assignee!=null?task.assignee:null,url:task.url||'',mode:'edit',today:task.today};
+  renderTaskModal();
+}
+function renderTaskModal(){
+  document.querySelectorAll('.overlay').forEach(function(e){e.remove();});
+  var d=S.modalData;var isEdit=d.mode==='edit';
+
+  // Default assignee to current user on new tasks
+  if(!isEdit&&d.assignee===null&&S.myUser!=null)d.assignee=S.myUser;
+
+  var u0=S.users[0],u1=S.users[1];
+  var chips=S.users.map(function(u,i){
+    var sel=d.assignee===i;
+    return '<button onclick="S.modalData.assignee=S.modalData.assignee==='+i+'?null:'+i+';renderTaskModal()" '+
+      'style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 14px;border-radius:var(--r-sm);border:1.5px solid '+(sel?'var(--amber)':'var(--border2)')+';background:'+(sel?'var(--amberBg)':'none')+';cursor:pointer;transition:all .15s">'+
+      '<div class="av av'+i+'" style="width:32px;height:32px;font-size:13px;opacity:'+(sel?'1':'.5')+'">'+u.name.slice(0,1).toUpperCase()+'</div>'+
+      '<span style="font-size:11px;font-weight:600;color:'+(sel?'var(--amber)':'var(--text3)')+'">'+u.name+'</span>'+
+    '</button>';
+  }).join('');
+
+  // Bike link section — hide only when we're literally inside the bike detail view
+  var bikePickHtml='';
+  var onDetailScreen=(S.screen==='detail');
+  if(!onDetailScreen&&!isEdit){
+    if(d.bikeId){
+      var selBike=S.bikes.find(function(b){return b.id===d.bikeId;});
+      bikePickHtml='<div style="margin-bottom:16px;display:flex;align-items:center;gap:8px">'+
+        '<svg width="13" height="13" viewBox="0 0 22 22" fill="none"><circle cx="6" cy="16" r="3.5" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="16" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M6 16L9 8H16L17 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="6.5" r="1.8" fill="currentColor"/></svg>'+
+        '<span style="font-size:13px;color:var(--amber);font-weight:500">'+(selBike?selBike.name:'Bike')+'</span>'+
+        '<button onclick="S.modalData.bikeId=null;renderTaskModal()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:2px 6px;border-radius:6px;border:0.5px solid var(--border2)">× remove</button>'+
+        '</div>';
+    } else {
+      bikePickHtml='<div style="margin-bottom:16px;padding:10px 0">'+
+        '<button onclick="openBikePicker()" style="background:none;border:none;color:var(--amber);font-size:15px;font-weight:500;cursor:pointer;padding:0;display:flex;align-items:center;gap:7px">'+
+          '<svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'+
+          'Link to a bike'+
+        '</button>'+
+      '</div>';
+    }
+  }
+
+  var div=document.createElement('div');div.className='overlay';
+  div.onclick=function(e){if(e.target===div)closeAllModals();};
+  div.innerHTML='<div class="sheet">'+
+    '<div class="sheet-handle"></div>'+
+    '<div class="sheet-title">'+(isEdit?'Edit task':'New task')+'</div>'+
+    '<div class="form-group"><textarea class="task-ta" id="task-inp" placeholder="What needs doing?" oninput="S.modalData.text=this.value">'+d.text.replace(/</g,'&lt;')+'</textarea></div>'+
+    bikePickHtml+
+    '<div class="form-group"><label class="lbl">Assign to</label>'+
+      '<div style="display:flex;gap:8px">'+chips+'</div></div>'+
+    (isEdit?'<div style="margin-bottom:12px"><label style="display:flex;align-items:center;gap:10px;cursor:pointer">'+
+      '<span style="font-size:13px;color:var(--text2)">Scheduled for today</span>'+
+      '<button class="toggle '+(d.today?'on':'off')+'" onclick="S.modalData.today=!S.modalData.today;renderTaskModal()"></button></label></div>':'')+
+    '<button class="btn btn-p" onclick="saveTask()">Save</button>'+
+    (isEdit?'<div style="margin-top:8px"><button class="btn btn-g" onclick="deleteTask()" style="color:var(--red)">Delete task</button></div>':'')+
+  '</div>';
+  document.body.appendChild(div);
+  setTimeout(function(){var el=document.getElementById('task-inp');if(el){el.focus();if(el.value)el.setSelectionRange(el.value.length,el.value.length);}},80);
+}
+function openBikePicker(){
+  document.querySelectorAll('.overlay').forEach(function(e){e.remove();});
+  var div=document.createElement('div');div.className='overlay';
+  div.onclick=function(e){if(e.target===div){renderTaskModal();return;}};
+  var opts=S.bikes.map(function(b){
+    var bIdx=_r(b.id);
+    return '<div onclick="S.modalData.bikeId=_g('+bIdx+');renderTaskModal()" style="padding:11px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px">'+
+      '<div class="av av'+S.bikes.indexOf(b)%6+'" style="width:26px;height:26px;font-size:10px">'+b.name.slice(0,2).toUpperCase()+'</div>'+b.name+'</div>';
+  }).join('');
+  div.innerHTML='<div class="sheet">'+
+    '<div class="sheet-handle"></div>'+
+    '<div class="sheet-title" style="margin-bottom:0">Link to a bike</div>'+
+    '<div style="margin:0 -16px">'+opts+
+      '<div onclick="S._returnToAddTask=true;closeAllModals();go(\'add-bike\')" style="padding:11px 14px;cursor:pointer;font-size:14px;color:var(--amber);display:flex;align-items:center;gap:8px">'+
+        '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Add new bike…</div>'+
+    '</div></div>';
+  document.body.appendChild(div);
+}
+function handleBikeSel(val){
+  if(val==='__new__'){S._returnToAddTask=true;closeAllModals();go('add-bike');}
+  else{S.modalData.bikeId=val?parseInt(val):null;renderTaskModal();}
+}
+async function saveTask(){
+  var d=S.modalData;
+  var inp=document.getElementById('task-inp');
+  var text=(inp?(inp.value||inp.textContent||''):d.text||'').trim();
+  if(!text){showToast('Enter a task description');return;}
+  var at=autoTag(text);
+  var tag=at||d.manualTag||null;
+  var newTask={id:crypto.randomUUID(),text:text,autoTag:at,manualTag:d.manualTag,cat:tag||'other',today:true,done:false,assignee:d.assignee,url:d.url||null,createdAt:Date.now()};
+  if(d.mode==='add'){
+    if(d.bikeId){
+      var bike=S.bikes.find(function(b){return b.id===d.bikeId;});if(!bike)return;
+      if(at==='list')bike.tasks=(bike.tasks||[]).filter(function(t){return !(etag(t)==='list'&&!t.done);});
+      else if(at==='photo'){var di=(bike.tasks||[]).findIndex(function(t){return etag(t)==='photo'&&!t.done;});if(di>=0)bike.tasks.splice(di,1);}
+      else if(at==='clean'){var di2=(bike.tasks||[]).findIndex(function(t){return etag(t)==='clean'&&!t.done;});if(di2>=0)bike.tasks.splice(di2,1);}
+      bike.tasks=bike.tasks||[];
+      bike.tasks.push(newTask);
+      await sbUpdate('bikes',d.bikeId,{tasks:bike.tasks});
+    } else {
+      await sbInsert('standalone_tasks',{text:text,auto_tag:at,manual_tag:d.manualTag,cat:tag||'other',today:true,done:false,assignee:d.assignee,url:d.url||null});
+    }
+  } else {
+    if(d.type==='bike'){
+      var bike2=S.bikes.find(function(b){return b.id===d.bikeId;});if(!bike2)return;
+      var task2=bike2.tasks.find(function(t){return t.id===d.taskId;});if(!task2)return;
+      task2.text=text;task2.autoTag=at;task2.manualTag=d.manualTag;task2.cat=tag||task2.cat||'other';task2.assignee=d.assignee;task2.url=d.url||null;
+      if(d.today!==undefined)task2.today=d.today;
+      await sbUpdate('bikes',d.bikeId,{tasks:bike2.tasks});
+    } else {
+      await sbUpdate('standalone_tasks',d.taskId,{text:text,auto_tag:at,manual_tag:d.manualTag,cat:tag||'other',assignee:d.assignee,url:d.url||null,today:d.today});
+    }
+  }
+  closeAllModals();await loadData();render();
+}
+async function deleteTask(){
+  var d=S.modalData;
+  if(d.type==='bike'){
+    var bike=S.bikes.find(function(b){return b.id===d.bikeId;});if(!bike)return;
+    bike.tasks=(bike.tasks||[]).filter(function(t){return t.id!==d.taskId;});
+    await sbUpdate('bikes',d.bikeId,{tasks:bike.tasks});
+  } else {
+    await sbDelete('standalone_tasks',d.taskId);
+  }
+  closeAllModals();await loadData();render();showToast('Task deleted');
+}
+
+/* COST PROMPT */
+function openCostPrompt(bikeId,task){
+  document.querySelectorAll('.confirm-sheet').forEach(function(e){e.remove();});
+  var div=document.createElement('div');div.className='confirm-sheet';
+  var safeName=task.text.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  var u0=S.users[0].name,u1=S.users[1].name;
+  var def=S.myUser!=null?S.myUser:0;
+  var i0=u0.slice(0,1).toUpperCase(),i1=u1.slice(0,1).toUpperCase();
+  var bIdx=_r(bikeId);
+  function pbBtn(idx,pfx){
+    var sel=idx===def;
+    var avClass=idx===0?'av0':'av3';
+    var name=idx===0?u0:u1;var ini=idx===0?i0:i1;
+    return '<button id="'+pfx+'-paid-'+idx+'" onclick="paidBySelect(\''+pfx+'\','+idx+')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px;border-radius:var(--r-sm);border:1.5px solid '+(sel?'var(--amber)':'var(--border2)')+';background:'+(sel?'var(--amberBg)':'none')+';cursor:pointer;transition:all .15s">'+
+      '<div class="av '+avClass+'" style="width:36px;height:36px;font-size:14px;opacity:'+(sel?'1':'.5')+'">'+ini+'</div>'+
+      '<span style="font-size:12px;font-weight:600;color:'+(sel?'var(--amber)':'var(--text3)')+'">'+name+'</span>'+
+    '</button>';
+  }
+  div.innerHTML='<div class="confirm-box">'+
+    '<div style="font-size:15px;font-weight:600;margin-bottom:4px">Any costs for this?</div>'+
+    '<div style="font-size:12px;color:var(--text2);margin-bottom:14px">'+task.text+'</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><span style="font-size:15px;color:var(--text2);flex-shrink:0">\u20AC</span>'+
+      '<input class="inp" id="cp-amt" type="number" placeholder="0.00" inputmode="decimal" style="flex:1"></div>'+
+    '<input class="inp" id="cp-note" type="text" placeholder="Note" value="'+safeName+'" style="margin-bottom:12px;font-size:13px">'+
+    '<div style="margin-bottom:16px"><label class="lbl">Paid by</label>'+
+      '<div style="display:flex;gap:10px">'+pbBtn(0,'cp')+pbBtn(1,'cp')+'</div></div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn" style="flex:1;background:rgba(224,85,80,.12);color:var(--red);border:1px solid rgba(224,85,80,.3)" onclick="this.closest(\'.confirm-sheet\').remove();finishToggle(_g('+bIdx+'))">No</button>'+
+      '<button class="btn btn-p" style="flex:1;background:var(--green);color:#051510" onclick="saveCostPrompt(_g('+bIdx+'),this)">Log it</button>'+
+    '</div></div>';
+  document.body.appendChild(div);
+  setTimeout(function(){var el=document.getElementById('cp-amt');if(el)el.focus();},80);
+}
+function paidBySelect(pfx,idx){
+  var b0=document.getElementById(pfx+'-paid-0'),b1=document.getElementById(pfx+'-paid-1');
+  if(!b0||!b1)return;
+  [b0,b1].forEach(function(b,i){
+    var sel=i===idx;
+    b.style.borderColor=sel?'var(--amber)':'var(--border2)';
+    b.style.background=sel?'var(--amberBg)':'none';
+    b.querySelector('span').style.color=sel?'var(--amber)':'var(--text3)';
+    b.querySelector('.av').style.opacity=sel?'1':'.5';
+  });
+}
+function cpSelectPaid(idx){paidBySelect('cp',idx);}
+async function saveCostPrompt(bikeId,btn){
+  var amt=parseFloat(document.getElementById('cp-amt').value)||0;
+  var note=document.getElementById('cp-note').value||'';
+  var b1=document.getElementById('cp-paid-1');
+  var paidBy=(b1&&b1.style.borderColor==='var(--amber)')||(!b1&&(S.myUser||0)===1)?1:0;
+  if(!amt){showToast('Enter an amount');return;}
+  await sbInsert('costs',{bike_id:bikeId,amount:amt,note:note,paid_by:paidBy});
+  btn.closest('.confirm-sheet').remove();
+  await loadData();render();showToast('\u20AC'+amt+' logged');
+  finishToggle(bikeId);
+}
+function finishToggle(bikeId){
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  var todayT=(bike.tasks||[]).filter(function(t){return t.today;});
+  if(todayT.every(function(t){return t.done;}))setTimeout(function(){showTodayDoneConfirm(bikeId);},300);
+  else if(S.screen==='today')renderToday();
+  else render();
+}
+function openAddCostModal(bikeId){
+  var bIdx=_r(bikeId);
+  var u0=S.users[0].name,u1=S.users[1].name;
+  var i0=u0.slice(0,1).toUpperCase(),i1=u1.slice(0,1).toUpperCase();
+  var def=S.myUser!=null?S.myUser:0;
+  var div=document.createElement('div');div.className='overlay';div.onclick=function(e){if(e.target===div)div.remove();};
+  function pbBtn2(idx){
+    var sel=idx===def;var avClass=idx===0?'av0':'av3';
+    var name=idx===0?u0:u1;var ini=idx===0?i0:i1;
+    return '<button id="ac-paid-'+idx+'" onclick="paidBySelect(\'ac\','+idx+')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px;border-radius:var(--r-sm);border:1.5px solid '+(sel?'var(--amber)':'var(--border2)')+';background:'+(sel?'var(--amberBg)':'none')+';cursor:pointer;transition:all .15s">'+
+      '<div class="av '+avClass+'" style="width:36px;height:36px;font-size:14px;opacity:'+(sel?'1':'.5')+'">'+ini+'</div>'+
+      '<span style="font-size:12px;font-weight:600;color:'+(sel?'var(--amber)':'var(--text3)')+'">'+name+'</span></button>';
+  }
+  div.innerHTML='<div class="sheet"><div class="sheet-handle"></div><div class="sheet-title">Add cost</div>'+
+    '<div class="form-group"><label class="lbl">Amount (\u20AC)</label><input class="inp" id="ac-amt" type="number" placeholder="0.00" inputmode="decimal"></div>'+
+    '<div class="form-group"><label class="lbl">Note (optional)</label><input class="inp" id="ac-note" type="text" placeholder="e.g. New brake pads"></div>'+
+    '<div class="form-group"><label class="lbl">Paid by</label><div style="display:flex;gap:10px">'+pbBtn2(0)+pbBtn2(1)+'</div></div>'+
+    '<button class="btn btn-p" onclick="saveManualCost(_g('+bIdx+'),this)">Add cost</button></div>';
+  document.body.appendChild(div);setTimeout(function(){var el=document.getElementById('ac-amt');if(el)el.focus();},80);
+}
+function acSelectPaid(idx){paidBySelect('ac',idx);}
+async function saveManualCost(bikeId,btn){
+  var amt=parseFloat(document.getElementById('ac-amt').value)||0;var note=document.getElementById('ac-note').value||'';
+  var b1=document.getElementById('ac-paid-1');
+  var paidBy=(b1&&b1.style.borderColor==='var(--amber)')||(!b1&&(S.myUser||0)===1)?1:0;
+  if(!amt){showToast('Enter an amount');return;}
+  await sbInsert('costs',{bike_id:bikeId,amount:amt,note:note,paid_by:paidBy});
+  btn.closest('.overlay').remove();await loadData();renderDetail();showToast('\u20AC'+amt+' logged');
+}
+async function deleteCost(costId,bikeId){await sbDelete('costs',costId);await loadData();renderDetail();showToast('Cost removed');}
+
+/* BIKE ACTIONS */
+async function cycleAssignee(bikeId,taskId){
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  var task=bike.tasks.find(function(t){return t.id===taskId;});if(!task)return;
+  task.assignee=task.assignee===null||task.assignee===undefined?0:task.assignee>=S.users.length-1?null:task.assignee+1;
+  await sbUpdate('bikes',bikeId,{tasks:bike.tasks});await loadData();render();
+}
+async function scheduleTask(bikeId,taskId){
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  var task=bike.tasks.find(function(t){return t.id===taskId;});if(!task)return;
+  task.today=true;await sbUpdate('bikes',bikeId,{tasks:bike.tasks});await loadData();render();showToast('Added to today');
+}
+function triggerAutoListed(bikeId){
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  var bIdx=_r(bikeId);
+  var div=document.createElement('div');div.className='confirm-sheet';
+  div.innerHTML='<div class="confirm-box">'+
+    '<div style="font-size:16px;font-weight:700;margin-bottom:5px">Mark '+bike.name+' as listed?</div>'+
+    '<div style="font-size:13px;color:var(--text2);margin-bottom:16px">All listing tasks are done.</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-g" style="flex:1" onclick="this.closest(\'.confirm-sheet\').remove()">Not yet</button>'+
+      '<button class="btn btn-p" style="flex:1;background:var(--green);color:#051510" onclick="this.closest(\'.confirm-sheet\').remove();showListedPricePrompt(_g('+bIdx+'))">Mark listed!</button>'+
+    '</div></div>';
+  document.body.appendChild(div);
+}
+function showListedPricePrompt(bikeId){
+  var bIdx=_r(bikeId);
+  var div=document.createElement('div');div.className='confirm-sheet';
+  div.innerHTML='<div class="confirm-box">'+
+    '<div style="font-size:16px;font-weight:700;margin-bottom:5px">Listed! \uD83E\uDD1E</div>'+
+    '<div style="font-size:13px;color:var(--text2);margin-bottom:12px">What did you list it for? (optional)</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><span style="color:var(--text2)">\u20ac</span><input class="inp" id="lp-price" type="number" placeholder="0" inputmode="decimal" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-g" style="flex:1" onclick="confirmListedFromSheet(_g('+bIdx+'),this,true)">Skip</button>'+
+      '<button class="btn btn-p" style="flex:1;background:var(--green);color:#051510" onclick="confirmListedFromSheet(_g('+bIdx+'),this,false)">Confirm</button>'+
+    '</div></div>';
+  document.body.appendChild(div);
+  setTimeout(function(){var el=document.getElementById('lp-price');if(el)el.focus();},80);
+}
+async function confirmListedFromSheet(bikeId,btn,skip){
+  var price=skip?0:(parseFloat(document.getElementById('lp-price')&&document.getElementById('lp-price').value)||0);
+  btn.closest('.confirm-sheet').remove();
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  // Auto-complete any open list tasks
+  var changed=false;
+  (bike.tasks||[]).forEach(function(t){if(etag(t)==='list'&&!t.done){t.done=true;changed=true;}});
+  var now=new Date().toISOString();
+  var upd={listed_at:now};if(price)upd.listed_price=price;if(changed)upd.tasks=bike.tasks;
+  await sbUpdate('bikes',bikeId,upd);await loadData();
+  animListed();render();
+}
+async function revealListedPrice(bikeId){
+  var el=document.getElementById('listed-price-reveal');
+  if(el){el.classList.add('open');var inp=document.getElementById('listing-price-inp');if(inp)setTimeout(function(){inp.focus();},50);}
+}
+async function confirmListed(bikeId){
+  var priceEl=document.getElementById('listing-price-inp');
+  var price=parseFloat(priceEl&&priceEl.value)||0;
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  var changed=false;
+  (bike.tasks||[]).forEach(function(t){if(etag(t)==='list'&&!t.done){t.done=true;changed=true;}});
+  var now=new Date().toISOString();
+  var upd={listed_at:now};if(price)upd.listed_price=price;if(changed)upd.tasks=bike.tasks;
+  await sbUpdate('bikes',bikeId,upd);await loadData();
+  animListed();setTimeout(function(){renderDetail();},400);
+}
+async function unmarkListed(bikeId){
+  await sbUpdate('bikes',bikeId,{listed_at:null,listed_price:null});await loadData();renderDetail();showToast('Listing removed');
+}
+function openSoldModal(bikeId){
+  var bIdx=_r(bikeId);
+  var div=document.createElement('div');div.className='confirm-sheet';
+  div.innerHTML='<div class="confirm-box">'+
+    '<div style="font-size:16px;font-weight:700;margin-bottom:5px">Mark as sold \uD83E\uDD11</div>'+
+    '<div style="font-size:13px;color:var(--text2);margin-bottom:12px">What did you sell it for?</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px"><span style="color:var(--text2);font-size:15px">\u20AC</span><input class="inp" id="sold-price-inp" type="number" placeholder="0" inputmode="decimal" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-g" style="flex:1" onclick="this.closest(\'.confirm-sheet\').remove()">Cancel</button>'+
+      '<button class="btn btn-p" style="flex:1;background:var(--green);color:#051510" onclick="markSold(_g('+bIdx+'),this)">Confirm sold</button>'+
+    '</div></div>';
+  document.body.appendChild(div);
+  setTimeout(function(){var el=document.getElementById('sold-price-inp');if(el)el.focus();},80);
+}
+async function markSold(bikeId,btn){
+  var priceEl=document.getElementById('sold-price-inp');
+  var price=parseFloat(priceEl&&priceEl.value)||0;
+  if(!price){showToast('Enter a sold price');if(priceEl)priceEl.focus();return;}
+  if(btn)btn.closest('.confirm-sheet').remove();
+  await sbUpdate('bikes',bikeId,{sold:true,sold_for:price});await loadData();
+  animSold();
+  var scrl=document.querySelector('.scrl');
+  if(scrl){scrl.style.transition='opacity .6s,transform .6s';scrl.style.opacity='0';scrl.style.transform='scale(.97) translateY(20px)';}
+  setTimeout(function(){S.bikesFilter='sold';go('bikes');},1900);
+}
+async function deleteBike(bikeId){
+  if(!confirm('Delete this bike and all its data?'))return;
+  // Delete storage photos first
+  var allPh=(S.photos[bikeId]&&S.photos[bikeId].listing||[]).slice();
+  if(S.photos[bikeId]&&S.photos[bikeId].cover)allPh.push(S.photos[bikeId].cover);
+  for(var i=0;i<allPh.length;i++){
+    var path=allPh[i].url&&allPh[i].url.split('/flipkit-photos/')[1];
+    if(path)await sbDeletePhoto(path);
+  }
+  // Delete bike row — costs and photos rows cascade automatically
+  await sbDelete('bikes',bikeId);
+  await loadData();go('bikes');showToast('Bike deleted');
+}
+
+/* SETTINGS */
+function openSettings(){
+  var div=document.createElement('div');div.className='overlay';div.id='settings-overlay';div.onclick=function(e){if(e.target===div)div.remove();};
+  renderSettingsInto(div);document.body.appendChild(div);
+}
+function renderSettingsInto(overlay){
+  var u0=S.users[0],u1=S.users[1];
+  var dtHtml=S.defaultTasks.map(function(d,i){
+    return '<div class="dtask-row"><span class="tag tg-'+d.cat+'" style="flex-shrink:0">'+d.cat+'</span><span style="flex:1;font-size:13px;color:var(--text2)">'+d.text+'</span>'+
+      '<button class="toggle '+(d.on?'on':'off')+'" onclick="S.defaultTasks['+i+'].on=!S.defaultTasks['+i+'].on;saveConfig();renderSettingsInto(this.closest(\'.overlay\'))"></button></div>';
+  }).join('');
+  overlay.innerHTML='<div class="sheet">'+
+    '<div class="sheet-handle"></div>'+
+    '<div class="sheet-title">Settings</div>'+
+    '<div class="sec" style="padding-top:0">Your names</div>'+
+    '<div class="card" style="padding:12px;margin-bottom:4px">'+
+      '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">'+
+        '<div class="av av0" style="width:34px;height:34px;font-size:13px;flex-shrink:0">'+u0.name.slice(0,1).toUpperCase()+'</div>'+
+        '<input class="inp" style="flex:1" type="text" value="'+u0.name+'" placeholder="Name" oninput="S.users[0].name=this.value;saveConfig()">'+
+        '<button class="copt '+(S.myUser===0?'sel':'')+'" onclick="S.myUser=0;saveConfig();renderSettingsInto(this.closest(\'.overlay\'))">Me</button>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;align-items:center">'+
+        '<div class="av av3" style="width:34px;height:34px;font-size:13px;flex-shrink:0">'+u1.name.slice(0,1).toUpperCase()+'</div>'+
+        '<input class="inp" style="flex:1" type="text" value="'+u1.name+'" placeholder="Name" oninput="S.users[1].name=this.value;saveConfig()">'+
+        '<button class="copt '+(S.myUser===1?'sel':'')+'" onclick="S.myUser=1;saveConfig();renderSettingsInto(this.closest(\'.overlay\'))">Me</button>'+
+      '</div>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:14px">Tap "Me" on your phone so the filter knows whose tasks are yours.</div>'+
+    '<div class="sec">Default tasks on every new bike</div>'+
+    '<div class="card" style="padding:0 12px;margin-bottom:8px">'+dtHtml+'</div>'+
+    '<button class="btn btn-p" onclick="this.closest(\'.overlay\').remove();render()">Done</button>'+
+  '</div>';
+}
+
+/* MAIN RENDER */
+function render(){
+  if(S.screen==='today')renderToday();
+  else if(S.screen==='bikes')renderBikes();
+  else if(S.screen==='detail')renderDetail();
+  else if(S.screen==='add-bike')renderAddBike();
+}
+
+/* PWA */
+function injectManifest(){
+  var manifest={name:'FlipKit',short_name:'FlipKit',start_url:'./',display:'standalone',background_color:'#0f0e0d',theme_color:'#0f0e0d',orientation:'portrait',
+    icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='38' fill='%230f0e0d'/><circle cx='56' cy='130' r='28' stroke='%23e8a547' stroke-width='10' fill='none'/><circle cx='136' cy='130' r='28' stroke='%23e8a547' stroke-width='10' fill='none'/><path d='M56 130L80 68H130L140 130' stroke='%23e8a547' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/><circle cx='96' cy='52' r='14' fill='%23e8a547'/><path d='M106 68L116 130' stroke='%23e8a547' stroke-width='10' stroke-linecap='round'/></svg>",sizes:'192x192',type:'image/svg+xml'}]
+  };
+  var blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  var link=document.createElement('link');link.rel='manifest';link.href=URL.createObjectURL(blob);
+  document.head.appendChild(link);
+}
+
+/* REAL-TIME SYNC */
+function setupRealtime(){
+  // Supabase real-time via WebSocket
+  var wsUrl='wss://alhxqzamfgfeiewfyegm.supabase.co/realtime/v1/websocket?vsn=1.0.0&apikey='+SB_KEY;
+  var ws;
+  function connect(){
+    try{
+      ws=new WebSocket(wsUrl);
+      ws.onopen=function(){
+        // Subscribe to all table changes
+        var sub={topic:'realtime:public',event:'phx_join',payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[
+          {event:'*',schema:'public',table:'bikes'},
+          {event:'*',schema:'public',table:'standalone_tasks'},
+          {event:'*',schema:'public',table:'costs'},
+          {event:'*',schema:'public',table:'photos'}
+        ]}},ref:'1'};
+        ws.send(JSON.stringify(sub));
+        setOnline(true);
+      };
+      ws.onmessage=async function(e){
+        var msg=JSON.parse(e.data);
+        if(msg.event==='postgres_changes'||msg.event==='INSERT'||msg.event==='UPDATE'||msg.event==='DELETE'){
+          await loadData();render();
+        }
+        // Heartbeat
+        if(msg.event==='phx_reply'&&msg.ref==='1')setOnline(true);
+      };
+      ws.onerror=function(){setOnline(false);};
+      ws.onclose=function(){setOnline(false);setTimeout(connect,5000);}; // reconnect
+    }catch(e){setOnline(false);}
+  }
+  connect();
+  // Ping every 25s to keep alive
+  setInterval(function(){if(ws&&ws.readyState===1)ws.send(JSON.stringify({topic:'realtime:public',event:'heartbeat',payload:{},ref:'hb'}));},25000);
+}
+function setOnline(on){
+  var dot=document.getElementById('sync-dot');
+  if(dot)dot.style.background=on?'var(--green)':'var(--red)';
+}
+
+/* INIT */
+async function init(){
+  injectManifest();
+  document.getElementById('app').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3)"><svg width="32" height="32" viewBox="0 0 36 36" fill="none"><circle cx="6" cy="28" r="5" stroke="var(--amber)" stroke-width="2.2"/><circle cx="30" cy="28" r="5" stroke="var(--amber)" stroke-width="2.2"/><path d="M6 28L12 12H26L30 28" stroke="var(--amber)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="9" r="3" fill="var(--amber)"/></svg><div style="font-size:13px">Loading FlipKit…</div></div>';
+  try{
+    await loadData();
+  }catch(e){
+    document.getElementById('app').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--red);padding:32px;text-align:center"><div style="font-size:15px;font-weight:600">Could not connect</div><div style="font-size:13px;color:var(--text3)">Check your internet connection and try again.</div><button class="btn btn-p" style="margin-top:16px;max-width:200px" onclick="init()">Retry</button></div>';
+    return;
+  }
+  setupRealtime();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
