@@ -327,7 +327,7 @@ async function loadData(){
   ]);
   // Normalise bikes: map snake_case → camelCase, parse tasks jsonb
   S.bikes=bikes.map(function(b){return {
-    id:b.id,name:b.name,bought:b.bought||0,frameSize:b.frame_size||'',
+    id:b.id,name:b.name,bought:b.bought||0,frameSize:b.frame_size||'',serialNumber:b.serial_number||'',
     sold:b.sold||false,soldFor:b.sold_for||null,
     listedAt:b.listed_at?new Date(b.listed_at).getTime():null,
     listedPrice:b.listed_price||null,
@@ -700,6 +700,9 @@ function renderToday(){
               '<div style="font-size:11px;color:var(--text3)">'+openCount+' open'+(openCount!==1?' tasks':' task')+'</div>'+
             '</div>'+
             '<button class="btn-sm" style="font-size:11px;padding:4px 8px;flex-shrink:0;color:'+stClr+';border-color:'+stClr+'55" onclick="S.prevScreen=S.screen;go(\'detail\',_g('+bIdx+'))">View bike</button>'+
+            '<button onclick="dismissBikeFromToday(_g('+bIdx+'))" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;flex-shrink:0;display:flex;align-items:center" title="Remove from today">'+
+              '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'+
+            '</button>'+
           '</div>'+
           '<div class="bike-group-tasks" id="tasks-'+bIdx+'">'+
           '<div style="padding:6px 11px 0">'+
@@ -807,6 +810,20 @@ function revealTodayDone(bikeId){
   if(reveal){reveal.classList.add('show');var btn=reveal.querySelector('.done-today-btn');if(btn)btn.style.display='flex';}
 }
 function showTodayDoneConfirm(bikeId){revealTodayDone(bikeId);}
+async function dismissBikeFromToday(bikeId){
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(!bike)return;
+  // Optimistic: move all today tasks back to up next
+  (bike.tasks||[]).forEach(function(t){if(t.today)t.today=false;});
+  var card=document.getElementById('group-'+_R.lastIndexOf(bikeId));
+  // Find the card by scanning _R for the most recent index of this bikeId
+  var cardIdx=-1;
+  for(var i=_R.length-1;i>=0;i--){if(_R[i]===bikeId){cardIdx=i;break;}}
+  var cardEl=document.getElementById('group-'+cardIdx);
+  if(cardEl){cardEl.classList.add('exit');setTimeout(function(){renderToday();},440);}
+  else renderToday();
+  sbUpdate('bikes',bikeId,{tasks:bike.tasks}).catch(function(){showToast('Sync error');});
+  showToast('Moved back to Up Next');
+}
 async function confirmTodayDone(bikeId,btn){
   document.querySelectorAll('.confirm-sheet').forEach(function(e){e.remove();});
   playSound('done');
@@ -944,6 +961,13 @@ function renderDetail(){
       '<input id="frame-size-inp" style="background:none;border:none;outline:none;color:var(--text);font-size:15px;font-weight:700;width:100%;font-family:inherit;padding:0;cursor:text" '+
         'placeholder="\u2014" value="'+(bike.frameSize||'')+'" '+
         'onblur="saveFrameSize(_g('+bIdx+'),this.value)" '+
+        'onkeydown="if(event.key===\'Enter\')this.blur()">'+
+    '</div>'+
+    '<div class="stat-pill editable" onclick="this.querySelector(\'input\').focus()" style="cursor:text">'+
+      '<span class="stat-pill-lbl">Serial no.</span>'+
+      '<input id="serial-inp" style="background:none;border:none;outline:none;color:var(--text);font-size:13px;font-weight:700;width:100%;font-family:inherit;padding:0;cursor:text" '+
+        'placeholder="\u2014" value="'+(bike.serialNumber||'')+'" '+
+        'onblur="saveSerialNumber(_g('+bIdx+'),this.value)" '+
         'onkeydown="if(event.key===\'Enter\')this.blur()">'+
     '</div>'+
   '</div>';
@@ -1229,7 +1253,7 @@ async function saveTask(){
   if(!text){showToast('Enter a task description');return;}
   var at=autoTag(text);
   var tag=at||d.manualTag||null;
-  var newTask={id:crypto.randomUUID(),text:text,autoTag:at,manualTag:d.manualTag,cat:tag||'other',today:true,done:false,assignee:d.assignee,url:d.url||null,createdAt:Date.now()};
+  var newTask={id:crypto.randomUUID(),text:text,autoTag:at,manualTag:d.manualTag,cat:tag||'other',today:!!d.today,done:false,assignee:d.assignee,url:d.url||null,createdAt:Date.now()};
   if(d.mode==='add'){
     if(d.bikeId){
       var bike=S.bikes.find(function(b){return b.id===d.bikeId;});if(!bike)return;
@@ -1240,7 +1264,7 @@ async function saveTask(){
       bike.tasks.push(newTask);
       await sbUpdate('bikes',d.bikeId,{tasks:bike.tasks});
     } else {
-      await sbInsert('standalone_tasks',{text:text,auto_tag:at,manual_tag:d.manualTag,cat:tag||'other',today:true,done:false,assignee:d.assignee,url:d.url||null});
+      await sbInsert('standalone_tasks',{text:text,auto_tag:at,manual_tag:d.manualTag,cat:tag||'other',today:!!d.today,done:false,assignee:d.assignee,url:d.url||null});
     }
   } else {
     if(d.type==='bike'){
@@ -1454,6 +1478,22 @@ async function markSold(bikeId,btn){
   var scrl=document.querySelector('.scrl');
   if(scrl){scrl.style.transition='opacity .6s,transform .6s';scrl.style.opacity='0';scrl.style.transform='scale(.97) translateY(20px)';}
   setTimeout(function(){S.bikesFilter='sold';go('bikes');},1900);
+}
+async function saveBikeName(bikeId,val){
+  var name=val.trim();if(!name)return;
+  await sbUpdate('bikes',bikeId,{name:name});
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(bike)bike.name=name;
+}
+async function saveFrameSize(bikeId,val){
+  var v=val.trim();
+  if(v&&/^\d+(\.\d+)?$/.test(v))v=v+'cm';
+  await sbUpdate('bikes',bikeId,{frame_size:v||null});
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(bike)bike.frameSize=v;
+}
+async function saveSerialNumber(bikeId,val){
+  var v=val.trim();
+  await sbUpdate('bikes',bikeId,{serial_number:v||null});
+  var bike=S.bikes.find(function(b){return b.id===bikeId;});if(bike)bike.serialNumber=v;
 }
 async function deleteBike(bikeId){
   if(!confirm('Delete this bike and all its data?'))return;
